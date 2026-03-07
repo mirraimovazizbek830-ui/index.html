@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+<title>MiniGram</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Syne:wght@400;600;700;800&family=Unbounded:wght@700;900&display=swap" rel="stylesheet"/>
+<style>
+/* ── CSS O'ZGARUVCHILAR — QORA REJIM (default) ── */
+:root{
+  --bg:#07080f;--s1:#0e1020;--s2:#151828;--s3:#1e2238;
+  --a1:#7c6dfa;--a2:#fa6d9a;--a3:#6df5c8;--a4:#fac56d;
+  --tx:#eceef8;--td:#5a607a;--br:rgba(124,109,250,0.13);
+  --glow:rgba(124,109,250,0.22);--glow2:rgba(250,109,154,0.15);
+  --shadow:rgba(0,0,0,0.5);
+  --inp-bg:rgba(255,255,255,0.04);
+  --inp-border:rgba(124,109,250,0.18);
+  --card-bg:rgba(14,16,32,0.9);
+  --bar-bg:rgba(7,8,15,0.92);
+  --topline:linear-gradient(90deg,transparent,rgba(124,109,250,.6),rgba(250,109,154,.6),transparent);
+}
+/* ── OQ REJIM ── */
+:root.light{
+  --bg:#f8f9ff;--s1:#eef0ff;--s2:#e8eaff;--s3:#dfe2ff;
+  --tx:#0e1020;--td:#5a607a;--br:rgba(124,109,250,0.18);
+  --glow:rgba(124,109,250,0.12);--glow2:rgba(250,109,154,0.08);
+  --shadow:rgba(100,100,150,0.15);
+  --inp-bg:rgba(124,109,250,0.05);
+  --inp-border:rgba(124,109,250,0.25);
+  --card-bg:rgba(238,240,255,0.95);
+  --bar-bg:rgba(248,249,255,0.95);
+  --topline:linear-gradient(90deg,transparent,rgba(124,109,250,.4),rgba(250,109,154,.4),transparent);
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--tx);
+  font-family:'Syne',sans-serif;transition:background .4s,color .4s}
+
+/* ── CANVAS FONI ── */
+#bg{position:fixed;inset:0;z-index:0;pointer-events:none;transition:opacity .4s}
+
+/* ── THEME TOGGLE TUGMASI ── */
+#theme-btn{
+  position:fixed;top:12px;right:72px;z-index:9999;
+  width:36px;height:36px;border-radius:50%;border:1px solid var(--br);
+  background:var(--s1);color:var(--tx);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:1rem;
+  transition:all .4s cubic-bezier(.16,1,.3,1);
+  box-shadow:0 2px 12px var(--shadow)}
+#theme-btn:hover{transform:scale(1.12);border-color:var(--a1);
+  box-shadow:0 4px 20px var(--glow)}
+#theme-btn.spin{animation:themeSpin .4s cubic-bezier(.16,1,.3,1)}
+@keyframes themeSpin{from{transform:rotate(0deg) scale(.8)}to{transform:rotate(360deg) scale(1)}}
+
+/* ── EKRANLAR ── */
+.screen{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;
+  transition:opacity .4s cubic-bezier(.4,0,.2,1),transform .4s cubic-bezier(.4,0,.2,1)}
+.screen.off{opacity:0;pointer-events:none;transform:translateY(-18px) scale(1.02)}
+
+/* ── TEXNIK ISHLAR EKRANI ── */
+#maint{background:var(--bg);z-index:100;flex-direction:column;display:none}
+.maint-box{text-align:center;padding:48px 32px;max-width:420px}
+.maint-icon{font-size:4rem;display:block;margin-bottom:20px;animation:float 3s ease-in-out infinite}
+.maint-title{font-family:'Unbounded',sans-serif;font-size:1.6rem;color:var(--tx);
+  margin-bottom:12px;letter-spacing:-.03em}
+.maint-msg{font-size:.83rem;font-family:'DM Mono',monospace;color:var(--td);line-height:1.8}
+.maint-dots{display:flex;gap:8px;justify-content:center;margin-top:28px}
+.maint-dot{width:8px;height:8px;border-radius:50%;background:var(--a1);
+  animation:dotpulse 1.4s ease-in-out infinite}
+.maint-dot:nth-child(2){animation-delay:.2s;background:var(--a2)}
+.maint-dot:nth-child(3){animation-delay:.4s;background:var(--a3)}
+@keyframes dotpulse{0%,80%,100%{transform:scale(.6);opacity:.4}40%{transform:scale(1);opacity:1}}
+
+/* ── AUTH EKRANI ── */
+.auth-wrap{position:relative;width:min(400px,94vw)}
+.auth-glow{position:absolute;inset:-40px;
+  background:radial-gradient(ellipse at 50% 40%,rgba(124,109,250,.18),transparent 70%);
+  pointer-events:none;animation:glowPulse 4s ease-in-out infinite}
+@keyframes glowPulse{0%,100%{opacity:.6}50%{opacity:1}}
+.auth-card{position:relative;
+  background:linear-gradient(160deg,var(--card-bg),rgba(21,24,40,.97));
+  border:1px solid rgba(124,109,250,.2);border-radius:28px;padding:48px 38px;
+  box-shadow:0 0 0 1px rgba(255,255,255,.03) inset,0 32px 64px var(--shadow);
+  animation:cardUp .7s cubic-bezier(.16,1,.3,1) both}
+@keyframes cardUp{from{opacity:0;transform:translateY(32px) scale(.96)}to{opacity:1;transform:none}}
+.auth-card::before{content:'';position:absolute;top:0;left:20%;right:20%;height:1px;
+  background:var(--topline)}
+.brand{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:6px}
+.brand-icon{font-size:2.2rem;animation:float 3.5s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.brand-name{font-family:'Unbounded',sans-serif;font-size:1.6rem;font-weight:900;letter-spacing:-.04em;
+  background:linear-gradient(135deg,var(--a1),var(--a2));-webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;background-clip:text}
+.auth-sub{font-size:.7rem;color:var(--td);font-family:'DM Mono',monospace;text-align:center;
+  margin-bottom:28px;letter-spacing:.05em}
+.tabs{display:flex;gap:3px;background:rgba(255,255,255,.04);border-radius:14px;padding:3px;margin-bottom:22px}
+.tab{flex:1;padding:9px;border:none;background:none;color:var(--td);font-family:'Syne',sans-serif;
+  font-size:.84rem;font-weight:700;border-radius:11px;cursor:pointer;transition:all .25s;letter-spacing:.01em}
+.tab.on{background:linear-gradient(135deg,rgba(124,109,250,.25),rgba(250,109,154,.15));
+  color:var(--tx);box-shadow:0 1px 0 rgba(255,255,255,.06) inset}
+.inp{width:100%;background:var(--inp-bg);border:1px solid var(--inp-border);
+  border-radius:13px;padding:13px 16px;font-size:.9rem;font-family:'DM Mono',monospace;
+  color:var(--tx);outline:none;margin-bottom:10px;transition:all .25s;letter-spacing:.02em}
+.inp:focus{border-color:var(--a1);background:rgba(124,109,250,.07);
+  box-shadow:0 0 0 4px rgba(124,109,250,.12)}
+.inp::placeholder{color:var(--td)}
+.btn-grad{width:100%;border:none;border-radius:13px;padding:14px;font-size:.9rem;font-weight:700;
+  color:#fff;cursor:pointer;font-family:'Syne',sans-serif;letter-spacing:.04em;
+  background:linear-gradient(135deg,var(--a1),var(--a2));margin-top:2px;
+  box-shadow:0 4px 24px rgba(124,109,250,.35);transition:all .2s;position:relative;overflow:hidden}
+.btn-grad::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.1),transparent);opacity:0;transition:opacity .2s}
+.btn-grad:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(124,109,250,.45)}
+.btn-grad:hover::after{opacity:1}
+.btn-grad:active{transform:translateY(0);opacity:.88}
+.btn-grad:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.errtxt{font-size:.7rem;font-family:'DM Mono',monospace;color:var(--a2);
+  min-height:16px;margin-top:8px;text-align:center}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+
+/* ── APP ASOSIY ── */
+#app{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;
+  opacity:0;pointer-events:none;transition:opacity .35s}
+#app.on{opacity:1;pointer-events:all}
+
+/* TOPBAR */
+.topbar{height:56px;display:flex;align-items:center;padding:0 16px;gap:10px;
+  background:var(--bar-bg);backdrop-filter:blur(24px);
+  border-bottom:1px solid var(--br);flex-shrink:0;z-index:20;
+  transition:background .4s,border-color .4s}
+.tb-ham{background:none;border:1px solid var(--br);border-radius:9px;padding:6px 10px;
+  color:var(--a1);font-size:.9rem;cursor:pointer;transition:all .2s;flex-shrink:0;line-height:1.3}
+.tb-ham:hover{background:rgba(124,109,250,.1);border-color:rgba(124,109,250,.3)}
+.tb-brand{font-family:'Unbounded',sans-serif;font-size:.95rem;font-weight:900;flex:1;
+  letter-spacing:-.03em;background:linear-gradient(90deg,var(--a1),var(--a2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.tb-chip{font-size:.66rem;font-family:'DM Mono',monospace;color:var(--a1);
+  background:rgba(124,109,250,.1);border:1px solid rgba(124,109,250,.2);
+  border-radius:999px;padding:4px 11px;max-width:100px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0}
+.tb-chip.adm{background:linear-gradient(135deg,rgba(250,197,109,.15),rgba(250,109,154,.1));
+  border-color:rgba(250,197,109,.3);color:var(--a4)}
+.tb-out{background:none;border:1px solid var(--br);border-radius:8px;padding:5px 10px;
+  color:var(--td);font-size:.66rem;font-family:'DM Mono',monospace;cursor:pointer;
+  transition:all .2s;white-space:nowrap;flex-shrink:0}
+.tb-out:hover{border-color:rgba(250,109,154,.4);color:var(--a2)}
+
+/* ASOSIY LAYOUT */
+.body{flex:1;display:flex;overflow:hidden;position:relative}
+
+/* SIDEBAR */
+.sidebar{width:252px;flex-shrink:0;border-right:1px solid var(--br);
+  background:var(--bar-bg);display:flex;flex-direction:column;overflow:hidden;
+  transition:background .4s,border-color .4s,transform .28s cubic-bezier(.16,1,.3,1)}
+@media(max-width:640px){
+  .sidebar{position:absolute;inset-block:0;left:0;z-index:30;
+    transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0);box-shadow:8px 0 32px var(--shadow)}
+  .col{width:100%}
+}
+.sb-head{padding:14px 12px 11px;border-bottom:1px solid var(--br);flex-shrink:0}
+.sb-lbl{font-size:.58rem;font-family:'DM Mono',monospace;color:var(--td);
+  letter-spacing:.12em;text-transform:uppercase;margin-bottom:9px}
+.sb-new{width:100%;background:linear-gradient(135deg,var(--a1),var(--a2));
+  border:none;border-radius:11px;padding:9px;font-size:.8rem;font-weight:700;
+  color:#fff;cursor:pointer;font-family:'Syne',sans-serif;
+  box-shadow:0 3px 14px rgba(124,109,250,.3);transition:all .2s}
+.sb-new:hover{transform:scale(1.02);box-shadow:0 5px 20px rgba(124,109,250,.4)}
+.sb-new:active{transform:scale(.98)}
+.sb-adm{width:100%;background:linear-gradient(135deg,#f0a030,var(--a2));
+  border:none;border-radius:11px;padding:9px;font-size:.8rem;font-weight:700;
+  color:#fff;cursor:pointer;font-family:'Syne',sans-serif;margin-top:7px;
+  box-shadow:0 3px 14px rgba(240,160,48,.25);transition:all .2s}
+.sb-adm:hover{transform:scale(1.02)}
+.sb-list{flex:1;overflow-y:auto;padding:7px 5px}
+.sb-list::-webkit-scrollbar{width:2px}
+.sb-list::-webkit-scrollbar-thumb{background:var(--br);border-radius:2px}
+
+/* Guruh elementlari sidebar da */
+.gi{padding:10px 12px;border-radius:12px;cursor:pointer;margin-bottom:3px;
+  border:1px solid transparent;transition:all .18s;
+  animation:giIn .3s ease both}
+@keyframes giIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+.gi:hover{background:rgba(124,109,250,.07);border-color:rgba(124,109,250,.14)}
+.gi.act{background:rgba(124,109,250,.12);border-color:rgba(124,109,250,.25)}
+.gi-row{display:flex;align-items:center;gap:5px;margin-bottom:2px}
+.gi-name{font-size:.83rem;font-weight:700;flex:1;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.gi-sub{font-size:.6rem;font-family:'DM Mono',monospace;color:var(--td);
+  display:flex;gap:4px;align-items:center}
+.bd{font-size:.55rem;padding:2px 6px;border-radius:999px;font-weight:700;
+  flex-shrink:0;white-space:nowrap}
+.b1{background:rgba(109,245,200,.09);color:var(--a3);border:1px solid rgba(109,245,200,.18)}
+.b2{background:rgba(250,109,154,.08);color:var(--a2);border:1px solid rgba(250,109,154,.16)}
+.b3{background:rgba(124,109,250,.1);color:var(--a1);border:1px solid rgba(124,109,250,.2)}
+.b4{background:rgba(250,197,109,.09);color:var(--a4);border:1px solid rgba(250,197,109,.2)}
+
+/* ASOSIY USTUN */
+.col{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+
+/* HOME SAHIFASI */
+#home{flex:1;overflow-y:auto;padding:20px 16px;
+  animation:fadeIn .4s ease both}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+#home::-webkit-scrollbar{width:2px}
+#home::-webkit-scrollbar-thumb{background:var(--br);border-radius:2px}
+.home-hero{text-align:center;padding:40px 20px 24px}
+.hero-icon{font-size:3rem;display:block;margin-bottom:12px;animation:float 3.5s ease-in-out infinite}
+.hero-title{font-family:'Unbounded',sans-serif;font-size:1.2rem;font-weight:900;
+  background:linear-gradient(135deg,var(--a1),var(--a2));-webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:8px;letter-spacing:-.03em}
+.hero-sub{font-size:.72rem;font-family:'DM Mono',monospace;color:var(--td);line-height:1.7}
+.hsec{margin-bottom:20px}
+.hsec-t{font-size:.58rem;font-family:'DM Mono',monospace;color:var(--td);
+  letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;
+  display:flex;align-items:center;gap:8px}
+.hsec-t::after{content:'';flex:1;height:1px;background:var(--br)}
+.hgi{padding:13px 15px;border-radius:14px;cursor:pointer;margin-bottom:6px;
+  border:1px solid var(--br);background:var(--card-bg);
+  transition:all .2s;display:flex;align-items:center;gap:12px;
+  animation:giIn .35s ease both}
+.hgi:hover{background:rgba(124,109,250,.08);border-color:rgba(124,109,250,.22);
+  transform:translateY(-2px);box-shadow:0 6px 24px var(--shadow)}
+.hgi:active{transform:translateY(0)}
+.hgi-ico{font-size:1.4rem;flex-shrink:0}
+.hgi-info{flex:1;min-width:0}
+.hgi-name{font-size:.86rem;font-weight:700;margin-bottom:3px;
+  display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.hgi-sub{font-size:.61rem;font-family:'DM Mono',monospace;color:var(--td);
+  display:flex;gap:5px;align-items:center}
+
+/* ADMIN PANELI */
+#admin{flex:1;overflow-y:auto;padding:20px 18px;display:none;
+  animation:fadeIn .4s ease both}
+#admin::-webkit-scrollbar{width:2px}
+#admin::-webkit-scrollbar-thumb{background:var(--br);border-radius:2px}
+.adm-hdr{margin-bottom:22px;animation:cardUp .5s ease both}
+.adm-hdr-title{font-family:'Unbounded',sans-serif;font-size:1.2rem;font-weight:900;
+  letter-spacing:-.03em;background:linear-gradient(135deg,var(--a4),var(--a2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;margin-bottom:4px}
+.adm-hdr-sub{font-size:.7rem;font-family:'DM Mono',monospace;color:var(--td)}
+.acard{background:var(--card-bg);border:1px solid var(--br);border-radius:18px;
+  padding:20px;margin-bottom:14px;animation:cardUp .5s ease both;
+  box-shadow:0 4px 20px var(--shadow);transition:background .4s,border-color .4s}
+.acard-t{font-size:.58rem;font-family:'DM Mono',monospace;color:var(--td);
+  letter-spacing:.12em;text-transform:uppercase;margin-bottom:14px;
+  display:flex;align-items:center;gap:7px}
+.acard-t::after{content:'';flex:1;height:1px;background:var(--br)}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px}
+.sbox{background:rgba(124,109,250,.06);border:1px solid var(--br);
+  border-radius:12px;padding:16px;text-align:center;transition:background .4s}
+.snum{font-family:'Unbounded',sans-serif;font-size:1.8rem;font-weight:900;
+  background:linear-gradient(135deg,var(--a1),var(--a2));-webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;background-clip:text}
+.slbl{font-size:.62rem;font-family:'DM Mono',monospace;color:var(--td);margin-top:3px}
+.maint-ta{width:100%;background:var(--inp-bg);border:1px solid var(--br);
+  border-radius:12px;padding:12px 14px;font-size:.83rem;font-family:'DM Mono',monospace;
+  color:var(--tx);outline:none;resize:none;height:76px;
+  transition:border-color .25s,background .4s;margin-bottom:10px}
+.maint-ta:focus{border-color:var(--a1);background:rgba(124,109,250,.06)}
+.mbtn{width:100%;border:none;border-radius:12px;padding:13px;font-size:.86rem;
+  font-weight:700;color:#fff;cursor:pointer;font-family:'Syne',sans-serif;
+  transition:all .2s;margin-bottom:8px;letter-spacing:.02em}
+.mbtn-on{background:linear-gradient(135deg,#e03030,var(--a2));
+  box-shadow:0 4px 18px rgba(224,48,48,.3)}
+.mbtn-off{background:linear-gradient(135deg,var(--a3),#00b894);
+  box-shadow:0 4px 18px rgba(109,245,200,.2)}
+.mbtn-cancel{background:linear-gradient(135deg,var(--a1),var(--a2));
+  box-shadow:0 4px 18px rgba(124,109,250,.3)}
+.mbtn:hover{transform:scale(1.02)}
+
+/* Admin ro'yxati — o'chirish tugmasi bilan */
+.alist{max-height:200px;overflow-y:auto;padding-right:4px}
+.alist::-webkit-scrollbar{width:2px}
+.alist::-webkit-scrollbar-thumb{background:var(--br);border-radius:2px}
+.ali{padding:8px 10px;border-radius:9px;font-size:.77rem;font-family:'DM Mono',monospace;
+  color:var(--tx);border-bottom:1px solid var(--br);
+  display:flex;align-items:center;gap:7px;transition:background .15s}
+.ali:last-child{border-bottom:none}
+.ali:hover{background:rgba(124,109,250,.06)}
+.ali-del{margin-left:auto;background:none;border:1px solid rgba(250,109,154,.3);
+  border-radius:6px;padding:3px 8px;font-size:.65rem;color:var(--a2);
+  cursor:pointer;font-family:'DM Mono',monospace;transition:all .15s;white-space:nowrap}
+.ali-del:hover{background:rgba(250,109,154,.1);border-color:var(--a2)}
+
+/* Loading spinner admin uchun */
+.adm-loading{display:flex;justify-content:center;padding:20px;gap:6px}
+.adm-dot{width:8px;height:8px;border-radius:50%;background:var(--a1);
+  animation:dotpulse 1.4s ease-in-out infinite}
+.adm-dot:nth-child(2){animation-delay:.2s;background:var(--a2)}
+.adm-dot:nth-child(3){animation-delay:.4s;background:var(--a3)}
+
+/* CHAT KO'RINISHI */
+#chat{flex:1;display:none;flex-direction:column;overflow:hidden;position:relative}
+.chdr{height:54px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 14px;border-bottom:1px solid var(--br);
+  background:var(--bar-bg);backdrop-filter:blur(18px);flex-shrink:0;
+  transition:background .4s,border-color .4s}
+.chdr-l{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+.bk{background:none;border:none;color:var(--a1);font-size:1.1rem;cursor:pointer;
+  padding:4px 6px;border-radius:8px;transition:background .15s;flex-shrink:0}
+.bk:hover{background:rgba(124,109,250,.1)}
+.cname{font-size:.9rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;letter-spacing:-.01em}
+.cstat{font-size:.59rem;font-family:'DM Mono',monospace;color:var(--td);margin-top:1px}
+
+/* Online dot — pulsing */
+.online-dot{display:inline-block;width:6px;height:6px;border-radius:50%;
+  background:#2ecc71;margin-right:3px;vertical-align:middle;
+  animation:onlinePulse 2s ease-in-out infinite}
+@keyframes onlinePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.7)}}
+
+/* Dropdown menyu */
+.dot-w{position:relative;flex-shrink:0}
+.dot-b{background:none;border:none;color:var(--tx);font-size:1.4rem;cursor:pointer;
+  padding:2px 7px;border-radius:8px;transition:background .15s;line-height:1;user-select:none}
+.dot-b:hover{background:rgba(255,255,255,.06)}
+.drop{position:absolute;top:42px;right:0;
+  background:var(--s1);backdrop-filter:blur(24px);
+  border:1px solid var(--br);border-radius:14px;min-width:192px;
+  box-shadow:0 16px 48px var(--shadow);z-index:500;overflow:hidden;
+  visibility:hidden;opacity:0;transform:translateY(-8px) scale(.97);
+  transition:visibility 0s .2s,opacity .2s,transform .2s cubic-bezier(.16,1,.3,1)}
+.drop.open{visibility:visible;opacity:1;transform:none;
+  transition:visibility 0s,opacity .2s,transform .2s cubic-bezier(.16,1,.3,1)}
+.ddi{padding:12px 16px;font-size:.82rem;cursor:pointer;transition:background .12s;
+  display:flex;align-items:center;gap:9px;color:var(--tx);font-weight:500}
+.ddi:hover{background:rgba(124,109,250,.1)}
+.ddi.red{color:var(--a2)}
+.ddi.red:hover{background:rgba(250,109,154,.08)}
+
+/* QULFLANGAN XONA */
+.locked{flex:1;display:none;flex-direction:column;align-items:center;
+  justify-content:center;gap:14px;padding:32px 24px;text-align:center}
+.l-ico{font-size:3.5rem;animation:float 3.5s ease-in-out infinite}
+.l-title{font-size:1rem;font-weight:700;letter-spacing:-.02em}
+.l-sub{font-size:.72rem;font-family:'DM Mono',monospace;color:var(--td);
+  line-height:1.7;max-width:220px}
+.locked .inp,.locked .btn-grad{max-width:270px;width:100%}
+
+/* XABARLAR */
+.msgs-wrap{flex:1;overflow:hidden;position:relative}
+.msgs{width:100%;height:100%;overflow-y:auto;padding:14px 12px;
+  display:flex;flex-direction:column;gap:8px;scroll-behavior:smooth}
+.msgs::-webkit-scrollbar{width:2px}
+.msgs::-webkit-scrollbar-thumb{background:var(--br);border-radius:2px}
+.smsg{text-align:center;font-size:.62rem;font-family:'DM Mono',monospace;color:var(--td)}
+.smsg span{background:rgba(255,255,255,.04);border:1px solid var(--br);
+  border-radius:999px;padding:3px 12px;display:inline-block}
+.mw{display:flex;flex-direction:column;max-width:74%;width:fit-content;
+  animation:msgIn .25s ease both}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.mw.me{align-self:flex-end;align-items:flex-end}
+.mw.them{align-self:flex-start;align-items:flex-start}
+.mmeta{font-size:.59rem;font-family:'DM Mono',monospace;color:var(--td);
+  margin-bottom:4px;display:flex;gap:5px;align-items:center}
+.mun{color:var(--a2);font-weight:500}
+.mw.me .mun{color:var(--a1)}
+.mbub{padding:10px 14px;border-radius:16px;font-size:.88rem;line-height:1.58;
+  word-break:break-word;white-space:pre-wrap}
+.mw.them .mbub{background:rgba(255,255,255,.05);border:1px solid var(--br);
+  border-bottom-left-radius:4px;transition:background .4s}
+.mw.me .mbub{background:linear-gradient(135deg,rgba(124,109,250,.35),rgba(250,109,154,.2));
+  border:1px solid rgba(124,109,250,.25);border-bottom-right-radius:4px;
+  box-shadow:0 4px 16px rgba(124,109,250,.15)}
+
+/* Pastga scroll tugmasi */
+#scroll-btn{position:absolute;bottom:12px;right:14px;
+  width:36px;height:36px;border-radius:50%;
+  background:linear-gradient(135deg,var(--a1),var(--a2));
+  border:none;color:#fff;font-size:1rem;cursor:pointer;
+  display:none;align-items:center;justify-content:center;
+  box-shadow:0 4px 16px rgba(124,109,250,.4);
+  animation:popIn .2s cubic-bezier(.16,1,.3,1);z-index:10}
+@keyframes popIn{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+#scroll-btn:hover{transform:scale(1.1)}
+
+/* QOSHILISH BARI */
+.jbar{padding:13px 16px;border-top:1px solid var(--br);
+  background:var(--bar-bg);display:none;
+  align-items:center;justify-content:space-between;gap:10px;flex-shrink:0;
+  transition:background .4s,border-color .4s}
+.jbar p{font-size:.73rem;font-family:'DM Mono',monospace;color:var(--td)}
+.jbtn{background:linear-gradient(135deg,var(--a3),#00b894);border:none;
+  border-radius:10px;padding:10px 20px;font-size:.8rem;font-weight:700;
+  color:var(--bg);cursor:pointer;font-family:'Syne',sans-serif;white-space:nowrap;
+  transition:all .18s;box-shadow:0 3px 14px rgba(109,245,200,.25)}
+.jbtn:hover{transform:scale(1.04);box-shadow:0 5px 20px rgba(109,245,200,.35)}
+
+/* XABAR YOZISH MAYDONI */
+.mia{padding:10px 12px 14px;border-top:1px solid var(--br);
+  background:var(--bar-bg);flex-shrink:0;display:none;
+  transition:background .4s,border-color .4s}
+.mrow{display:flex;gap:8px;align-items:flex-end}
+#mi{flex:1;background:var(--inp-bg);border:1px solid var(--br);border-radius:13px;
+  padding:11px 14px;font-size:.88rem;font-family:'Syne',sans-serif;color:var(--tx);
+  outline:none;resize:none;max-height:90px;min-height:44px;
+  transition:all .25s;line-height:1.5}
+#mi:focus{border-color:var(--a1);background:rgba(124,109,250,.07);
+  box-shadow:0 0 0 4px rgba(124,109,250,.12)}
+#mi::placeholder{color:var(--td)}
+
+/* Send tugmasi */
+.sbtn{width:44px;height:44px;border-radius:12px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--a1),var(--a2));border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:1.05rem;color:#fff;
+  transition:all .18s;box-shadow:0 3px 14px rgba(124,109,250,.35)}
+.sbtn:hover:not(:disabled){transform:scale(1.08);box-shadow:0 6px 22px rgba(124,109,250,.45)}
+.sbtn:active:not(:disabled){transform:scale(.92)}
+.sbtn:disabled{opacity:.35;cursor:not-allowed}
+.sbtn.pulse{animation:sendPulse .3s ease}
+@keyframes sendPulse{0%{transform:scale(1)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+
+/* MODAL */
+.ov{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.75);
+  backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .22s}
+.ov.on{opacity:1;pointer-events:all}
+.mbox{background:linear-gradient(160deg,var(--card-bg),rgba(21,24,40,.99));
+  border:1px solid rgba(124,109,250,.2);border-radius:24px;padding:32px 28px;
+  width:min(355px,94vw);box-shadow:0 24px 64px var(--shadow);
+  animation:cardUp .38s cubic-bezier(.16,1,.3,1) both;
+  position:relative;overflow:hidden;transition:background .4s}
+.mbox::before{content:'';position:absolute;top:0;left:15%;right:15%;height:1px;
+  background:var(--topline)}
+.mttl{font-size:1.05rem;font-weight:800;margin-bottom:18px;letter-spacing:-.02em;
+  background:linear-gradient(135deg,var(--a1),var(--a2));-webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;background-clip:text}
+.trow{display:flex;gap:7px;margin-bottom:12px}
+.tbtn{flex:1;padding:9px;border-radius:10px;border:1px solid var(--br);
+  background:none;color:var(--td);font-family:'Syne',sans-serif;
+  font-weight:700;font-size:.8rem;cursor:pointer;transition:all .18s}
+.tbtn.sp{border-color:rgba(109,245,200,.3);color:var(--a3);background:rgba(109,245,200,.07)}
+.tbtn.sm{border-color:rgba(250,109,154,.3);color:var(--a2);background:rgba(250,109,154,.07)}
+.mbtns{display:flex;gap:8px;margin-top:10px}
+.bcnl{flex:1;border:1px solid var(--br);border-radius:12px;padding:13px;font-size:.86rem;
+  font-weight:700;color:var(--td);cursor:pointer;font-family:'Syne',sans-serif;
+  background:none;transition:all .18s}
+.bcnl:hover{background:rgba(255,255,255,.05);color:var(--tx);
+  border-color:rgba(255,255,255,.1)}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+
+<!-- Tema almashtirish tugmasi -->
+<button id="theme-btn" title="Tema almashtirish" onclick="toggleTheme()">🌙</button>
+
+<!-- TEXNIK ISHLAR EKRANI -->
+<div class="screen" id="maint" style="display:none">
+  <div class="maint-box">
+    <span class="maint-icon">🔧</span>
+    <div class="maint-title">Yangilanmoqda</div>
+    <div class="maint-msg" id="maint-txt">Tez orada qaytamiz...</div>
+    <div class="maint-dots">
+      <div class="maint-dot"></div>
+      <div class="maint-dot"></div>
+      <div class="maint-dot"></div>
+    </div>
+  </div>
+</div>
+
+<!-- AUTH EKRANI -->
+<div class="screen off" id="auth">
+  <div class="auth-wrap">
+    <div class="auth-glow"></div>
+    <div class="auth-card">
+      <div class="brand">
+        <span class="brand-icon">✉️</span>
+        <span class="brand-name">MiniGram</span>
+      </div>
+      <p class="auth-sub">// real vaqt · anonim · xavfsiz</p>
+      <div class="tabs">
+        <button class="tab on" onclick="switchTab('login')">Kirish</button>
+        <button class="tab" onclick="switchTab('register')">Ro'yxat</button>
+      </div>
+      <input class="inp" id="an" type="text" placeholder="Foydalanuvchi nomi"
+        maxlength="20" autocomplete="off" spellcheck="false"/>
+      <input class="inp" id="ap" type="password" placeholder="Parol" maxlength="40"/>
+      <button class="btn-grad" id="abtn" onclick="doAuth()">Kirish →</button>
+      <div class="errtxt" id="aerr"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ASOSIY APP -->
+<div id="app">
+  <div class="topbar">
+    <button class="tb-ham" onclick="toggleSB()">☰</button>
+    <span class="tb-brand">✉️ MiniGram</span>
+    <span class="tb-chip" id="tbu">—</span>
+    <button class="tb-out" onclick="doLogout()">Chiqish</button>
+  </div>
+
+  <div class="body">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sb">
+      <div class="sb-head">
+        <div class="sb-lbl">Guruhlar</div>
+        <button class="sb-new" onclick="openCreate()">+ Yangi guruh</button>
+        <button class="sb-adm hidden" id="sb-adm" onclick="showAdmin()">⚙ Admin panel</button>
+      </div>
+      <div class="sb-list" id="sbl"></div>
+    </div>
+
+    <!-- ASOSIY USTUN -->
+    <div class="col">
+
+      <!-- HOME -->
+      <div id="home">
+        <div class="home-hero" id="hhero">
+          <span class="hero-icon">✉️</span>
+          <div class="hero-title">MiniGram</div>
+          <p class="hero-sub">Guruh tanlang yoki yangi guruh oching</p>
+        </div>
+        <div class="hsec hidden" id="sec-my">
+          <div class="hsec-t">Mening guruhlarim</div>
+          <div id="lst-my"></div>
+        </div>
+        <div class="hsec hidden" id="sec-all">
+          <div class="hsec-t">Barcha guruhlar</div>
+          <div id="lst-all"></div>
+        </div>
+      </div>
+
+      <!-- ADMIN PANELI -->
+      <div id="admin">
+        <div class="adm-hdr">
+          <div class="adm-hdr-title">⚙ Admin Panel</div>
+          <div class="adm-hdr-sub">MiniGram boshqaruvi · lord</div>
+        </div>
+        <!-- Statistika -->
+        <div class="acard">
+          <div class="acard-t">Statistika</div>
+          <div class="stat-grid">
+            <div class="sbox"><div class="snum" id="su">—</div><div class="slbl">Foydalanuvchi</div></div>
+            <div class="sbox"><div class="snum" id="sg">—</div><div class="slbl">Guruh</div></div>
+          </div>
+        </div>
+        <!-- Foydalanuvchilar ro'yxati -->
+        <div class="acard">
+          <div class="acard-t">Foydalanuvchilar</div>
+          <div id="au-wrap">
+            <div class="adm-loading"><div class="adm-dot"></div><div class="adm-dot"></div><div class="adm-dot"></div></div>
+          </div>
+        </div>
+        <!-- Guruhlar ro'yxati -->
+        <div class="acard">
+          <div class="acard-t">Guruhlar</div>
+          <div id="ag-wrap">
+            <div class="adm-loading"><div class="adm-dot"></div><div class="adm-dot"></div><div class="adm-dot"></div></div>
+          </div>
+        </div>
+        <!-- Texnik ishlar rejimi -->
+        <div class="acard">
+          <div class="acard-t">Texnik ishlar rejimi</div>
+          <textarea class="maint-ta" id="mta" placeholder="Foydalanuvchilarga ko'rinadigan xabar...">Sayt yangilanmoqda, tez orada qaytamiz...</textarea>
+          <button class="mbtn mbtn-off" id="mtbtn" onclick="toggleMaint()">🔧 Yangilanmoqda rejimini yoqish</button>
+          <button class="mbtn mbtn-cancel" onclick="cancelMaint()">✓ Bekor qilish (saytni ochish)</button>
+        </div>
+      </div>
+
+      <!-- CHAT KO'RINISHI -->
+      <div id="chat">
+        <div class="chdr">
+          <div class="chdr-l">
+            <button class="bk" onclick="goBack()">⬅</button>
+            <div style="min-width:0">
+              <div class="cname" id="cname">—</div>
+              <div class="cstat" id="cstat">—</div>
+            </div>
+          </div>
+          <div class="dot-w">
+            <button class="dot-b" onclick="toggleDrop(event)">⋮</button>
+            <div class="drop" id="drop">
+              <div class="ddi" onclick="doLeave()">🚪 Guruhni tark etish</div>
+              <div class="ddi red hidden" id="ddel" onclick="doDelete()">🗑 Guruhni o'chirish</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Qulflangan xona -->
+        <div class="locked" id="locked">
+          <span class="l-ico">🔒</span>
+          <div class="l-title">Maxfiy guruh</div>
+          <div class="l-sub">Chatni ko'rish uchun guruh parolini kiriting</div>
+          <input class="inp" id="lpw" type="password" placeholder="Guruh paroli" maxlength="40"/>
+          <div class="errtxt" id="lerr"></div>
+          <button class="btn-grad" onclick="unlock()">Kirish →</button>
+        </div>
+
+        <!-- Xabarlar maydoni -->
+        <div class="msgs-wrap">
+          <div class="msgs hidden" id="msgs"></div>
+          <button id="scroll-btn" onclick="scrollBottom(true)" title="Pastga o'tish">↓</button>
+        </div>
+
+        <!-- Qo'shilish bari — azos emas uchun -->
+        <div class="jbar" id="jbar">
+          <p>Siz bu guruh azosi emassiz</p>
+          <button class="jbtn" onclick="openJoin()">Qo'shilish →</button>
+        </div>
+
+        <!-- Xabar yozish maydoni — azolar uchun -->
+        <div class="mia" id="mia">
+          <div class="mrow">
+            <textarea id="mi" placeholder="Xabar yozing..." rows="1"></textarea>
+            <button class="sbtn" id="sbtn" onclick="sendMsg()" disabled>➤</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /col -->
+  </div><!-- /body -->
+</div><!-- /app -->
+
+<!-- GURUH YARATISH MODALI -->
+<div class="ov" id="cm">
+  <div class="mbox">
+    <div class="mttl">➕ Yangi Guruh</div>
+    <input class="inp" id="cn" placeholder="Guruh nomi" maxlength="30" autocomplete="off"/>
+    <div class="trow">
+      <button class="tbtn sp" id="tp" onclick="selt('public')">🌐 Ommaviy</button>
+      <button class="tbtn" id="tpr" onclick="selt('private')">🔒 Maxfiy</button>
+    </div>
+    <div id="cpw" class="hidden">
+      <input class="inp" id="cpwi" type="password" placeholder="Parol (min 4 belgi)" maxlength="40"/>
+    </div>
+    <div class="errtxt" id="cerr"></div>
+    <div class="mbtns">
+      <button class="btn-grad" style="flex:1;margin-top:0" onclick="createGrp()">Yaratish</button>
+      <button class="bcnl" onclick="closeM('cm')">Bekor</button>
+    </div>
+  </div>
+</div>
+
+<!-- GURUHGA QO'SHILISH MODALI -->
+<div class="ov" id="jm">
+  <div class="mbox">
+    <div class="mttl">🔑 Guruhga Qo'shilish</div>
+    <p style="font-size:.76rem;color:var(--td);font-family:'DM Mono',monospace;
+      margin-bottom:14px" id="jlbl">—</p>
+    <div id="jpw" class="hidden">
+      <input class="inp" id="jpwi" type="password" placeholder="Guruh paroli" maxlength="40"/>
+    </div>
+    <div class="errtxt" id="jerr"></div>
+    <div class="mbtns">
+      <button class="btn-grad"
+        style="flex:1;margin-top:0;background:linear-gradient(135deg,var(--a3),#00b894);
+          box-shadow:0 4px 18px rgba(109,245,200,.25);color:var(--bg)"
+        onclick="joinGrp()">Qo'shilish</button>
+      <button class="bcnl" onclick="closeM('jm')">Bekor</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── API manzili — o'zgartirilmasin ──
+const API = 'https://hackfollow111.pythonanywhere.com';
+
+// ── Global o'zgaruvchilar ──
+let me = '', isAdm = false, cur = '', off = 0;
+let timer = null, gt = 'public';
+let gdata = [], unlocked = new Set(), maintOn = false;
+
+// ── YORDAMCHI FUNKSIYALAR ──────────────────────────────
+const esc = s => String(s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const $ = id => document.getElementById(id);
+
+const post = (u, b) => fetch(API + u, {
+  method: 'POST',
+  headers: {'Content-Type': 'application/json'},
+  body: JSON.stringify(b)
+}).then(r => r.json());
+
+const get = u => fetch(API + u).then(r => r.json());
+
+const shake = id => {
+  const e = $(id);
+  e.style.animation = 'none';
+  requestAnimationFrame(() => e.style.animation = 'shake .4s ease');
+};
+
+// ── CANVAS FON ANIMATSIYASI ───────────────────────────
+const cv = document.getElementById('bg');
+const cx = cv.getContext('2d');
+let W, H, pts = [];
+
+const rs = () => { W = cv.width = innerWidth; H = cv.height = innerHeight; };
+rs();
+addEventListener('resize', rs);
+
+// Partikl ranglarini mavzuga qarab qaytarish
+function getColors() {
+  const isLight = document.documentElement.classList.contains('light');
+  if (isLight) return [
+    'rgba(124,109,250,', 'rgba(250,109,154,', 'rgba(109,245,200,'
+  ];
+  return [
+    'rgba(124,109,250,', 'rgba(250,109,154,', 'rgba(109,245,200,'
+  ];
+}
+
+class P {
+  constructor() { this.r(); }
+  r() {
+    this.x = Math.random() * W; this.y = Math.random() * H;
+    this.vx = (Math.random() - .5) * .28; this.vy = (Math.random() - .5) * .28;
+    this.s = Math.random() * 1.1 + .3;
+    this.c = getColors()[~~(Math.random() * 3)];
+    this.a = Math.random() * .22 + .05;
+  }
+  u() {
+    this.x += this.vx; this.y += this.vy;
+    if (this.x < 0 || this.x > W || this.y < 0 || this.y > H) this.r();
+  }
+  d() {
+    const isLight = document.documentElement.classList.contains('light');
+    const alpha = isLight ? this.a * .6 : this.a;
+    cx.beginPath(); cx.arc(this.x, this.y, this.s, 0, Math.PI * 2);
+    cx.fillStyle = this.c + alpha + ')'; cx.fill();
+  }
+}
+
+for (let i = 0; i < 60; i++) pts.push(new P());
+
+(function loop() {
+  cx.clearRect(0, 0, W, H);
+  const isLight = document.documentElement.classList.contains('light');
+
+  // Fon gradienti
+  const g = cx.createRadialGradient(W * .3, H * .25, 0, W * .3, H * .25, W * .55);
+  if (isLight) {
+    g.addColorStop(0, 'rgba(124,109,250,0.02)');
+  } else {
+    g.addColorStop(0, 'rgba(124,109,250,0.04)');
+  }
+  g.addColorStop(1, 'transparent');
+  cx.fillStyle = g; cx.fillRect(0, 0, W, H);
+
+  pts.forEach(p => { p.u(); p.d(); });
+
+  // Partikllar orasidagi chiziqlar
+  const lineAlpha = isLight ? 0.015 : 0.03;
+  for (let i = 0; i < pts.length; i++) {
+    for (let j = i + 1; j < pts.length; j++) {
+      const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y;
+      const d = Math.sqrt(dx * dx + dy * dy);
+      if (d < 70) {
+        cx.beginPath(); cx.moveTo(pts[i].x, pts[i].y);
+        cx.lineTo(pts[j].x, pts[j].y);
+        cx.strokeStyle = `rgba(124,109,250,${lineAlpha * (1 - d / 70)})`;
+        cx.lineWidth = .5; cx.stroke();
+      }
+    }
+  }
+  requestAnimationFrame(loop);
+})();
+
+// ── TEMA BOSHQARUVI ───────────────────────────────────
+function toggleTheme() {
+  const html = document.documentElement;
+  const btn = $('theme-btn');
+  const isLight = html.classList.contains('light');
+
+  html.classList.toggle('light');
+  btn.textContent = isLight ? '🌙' : '☀️';
+  btn.classList.add('spin');
+  setTimeout(() => btn.classList.remove('spin'), 400);
+
+  // localStorage ga saqlash
+  localStorage.setItem('mg_theme', isLight ? 'dark' : 'light');
+}
+
+function applyTheme() {
+  const saved = localStorage.getItem('mg_theme');
+  const btn = $('theme-btn');
+  if (saved === 'light') {
+    document.documentElement.classList.add('light');
+    btn.textContent = '☀️';
+  } else {
+    document.documentElement.classList.remove('light');
+    btn.textContent = '🌙';
+  }
+}
+
+// ── SAHIFA YUKLANGANDA ────────────────────────────────
+window.addEventListener('DOMContentLoaded', async () => {
+  applyTheme();
+  try {
+    const s = await get('/status');
+    if (s.maintenance) {
+      showMaint(s.message);
+      await tryAuto(true);
+      return;
+    }
+  } catch (e) {}
+  await tryAuto(false);
+});
+
+async function tryAuto(maint) {
+  const u = localStorage.getItem('mg_u');
+  const p = localStorage.getItem('mg_p');
+  if (u && p) {
+    try {
+      const d = await post('/login', {username: u, password: p});
+      if (d.ok) {
+        me = d.username; isAdm = d.is_admin || false;
+        if (maint && !isAdm) return;
+        startApp(); return;
+      }
+    } catch (e) {}
+  }
+  if (!maint) $('auth').classList.remove('off');
+}
+
+function showMaint(msg) {
+  $('maint').style.display = 'flex';
+  $('maint-txt').textContent = msg || 'Tez orada qaytamiz...';
+}
+function hideMaint() { $('maint').style.display = 'none'; }
+
+// ── AUTH ──────────────────────────────────────────────
+let amode = 'login';
+function switchTab(m) {
+  amode = m;
+  document.querySelectorAll('.tab').forEach((t, i) =>
+    t.classList.toggle('on', (m === 'login' && i === 0) || (m === 'register' && i === 1))
+  );
+  $('abtn').textContent = m === 'login' ? 'Kirish →' : "Ro'yxatdan o'tish →";
+  $('aerr').textContent = '';
+}
+
+async function doAuth() {
+  const n = $('an').value.trim(), p = $('ap').value.trim(), e = $('aerr');
+  e.textContent = '';
+  try {
+    const d = await post(amode === 'login' ? '/login' : '/register', {username: n, password: p});
+    if (!d.ok) { e.textContent = d.error; shake('aerr'); return; }
+    me = d.username; isAdm = d.is_admin || false;
+    localStorage.setItem('mg_u', n); localStorage.setItem('mg_p', p);
+    startApp();
+  } catch (ex) {
+    e.textContent = "Server bilan bog'lanib bo'lmadi!";
+  }
+}
+
+async function doLogout() {
+  clearInterval(timer); timer = null;
+  try { await post('/logout', {username: me}); } catch (e) {}
+  localStorage.removeItem('mg_u'); localStorage.removeItem('mg_p');
+  me = ''; isAdm = false; cur = ''; off = 0; gdata = []; unlocked = new Set();
+  $('app').classList.remove('on');
+  try {
+    const s = await get('/status');
+    if (s.maintenance) { showMaint(s.message); return; }
+  } catch (e) {}
+  hideMaint(); $('auth').classList.remove('off');
+  showHome();
+}
+
+// ── APP ISHGA TUSHIRISH ───────────────────────────────
+function startApp() {
+  hideMaint();
+  $('auth').classList.add('off');
+  $('app').classList.add('on');
+  $('tbu').textContent = me;
+  if (isAdm) {
+    $('tbu').classList.add('adm');
+    $('sb-adm').classList.remove('hidden');
+  } else {
+    $('tbu').classList.remove('adm');
+    $('sb-adm').classList.add('hidden');
+  }
+  loadG();
+  clearInterval(timer);
+  timer = setInterval(bgTick, 2500); // har 2.5 soniyada yangilash
+}
+
+async function bgTick() {
+  await loadG(true);
+  if (cur) await pollMsgs();
+  if (!isAdm) {
+    try {
+      const s = await get('/status');
+      if (s.maintenance) {
+        clearInterval(timer);
+        $('app').classList.remove('on');
+        showMaint(s.message);
+      }
+    } catch (e) {}
+  }
+}
+
+// ── GURUHLAR ─────────────────────────────────────────
+async function loadG(silent = false) {
+  try {
+    const d = await get('/groups');
+    if (!d.ok) return;
+    gdata = d.groups;
+    renderHome();
+    if (!$('drop').classList.contains('open') || !silent) renderSB();
+    if (cur) {
+      const g = gdata.find(x => x.name === cur);
+      if (g) $('cstat').textContent = `${g.count} azо`;
+    }
+  } catch (e) {}
+}
+
+function renderSB() {
+  const w = $('sbl');
+  if (!gdata.length) {
+    w.innerHTML = '<div style="text-align:center;padding:20px;font-size:.66rem;' +
+      'font-family:DM Mono,monospace;color:var(--td)">Guruh yo\'q</div>';
+    return;
+  }
+  w.innerHTML = '';
+  gdata.forEach((g, i) => {
+    const iM = g.members.includes(me), iO = g.owner === me, iA = g.name === cur;
+    const d = document.createElement('div');
+    d.className = 'gi' + (iA ? ' act' : '');
+    d.style.animationDelay = (i * 0.04) + 's'; // staggered animatsiya
+    d.innerHTML = `
+      <div class="gi-row">
+        <span class="gi-name">${esc(g.name)}${g.type === 'private' ? ' 🔒' : ''}</span>
+        ${iO ? '<span class="bd b3">Ega</span>' : iM ? '<span class="bd b4">Azо</span>' : ''}
+      </div>
+      <div class="gi-sub">
+        <span class="bd ${g.type === 'public' ? 'b1' : 'b2'}">${g.type === 'public' ? 'Ommaviy' : 'Maxfiy'}</span>
+        ${g.count} azо
+      </div>`;
+    d.onclick = () => openGrpV(g.name);
+    w.appendChild(d);
+  });
+}
+
+function renderHome() {
+  const my = gdata.filter(g => g.members.includes(me));
+  const ot = gdata.filter(g => !g.members.includes(me));
+  $('hhero').style.display = gdata.length === 0 ? '' : 'none';
+  $('sec-my').classList.toggle('hidden', my.length === 0);
+  $('sec-all').classList.toggle('hidden', ot.length === 0);
+  buildHL('lst-my', my); buildHL('lst-all', ot);
+}
+
+function buildHL(id, list) {
+  const w = $(id); w.innerHTML = '';
+  list.forEach((g, i) => {
+    const iO = g.owner === me, iM = g.members.includes(me);
+    const d = document.createElement('div');
+    d.className = 'hgi';
+    d.style.animationDelay = (i * 0.05) + 's';
+    d.innerHTML = `
+      <span class="hgi-ico">${g.type === 'private' ? '🔒' : '💬'}</span>
+      <div class="hgi-info">
+        <div class="hgi-name">
+          ${esc(g.name)}
+          ${iO ? '<span class="bd b3">Ega</span>' : iM ? '<span class="bd b4">Azо</span>' : ''}
+        </div>
+        <div class="hgi-sub">
+          <span class="bd ${g.type === 'public' ? 'b1' : 'b2'}">${g.type === 'public' ? 'Ommaviy' : 'Maxfiy'}</span>
+          · ${g.count} azо
+        </div>
+      </div>`;
+    d.onclick = () => openGrpV(g.name);
+    w.appendChild(d);
+  });
+}
+
+// ── GURUH OCHISH ──────────────────────────────────────
+function openGrpV(gname) {
+  cur = gname; off = 0; $('msgs').innerHTML = '';
+  showChat(); renderSB();
+  if (window.innerWidth <= 640) $('sb').classList.remove('open');
+  const g = gdata.find(x => x.name === gname);
+  if (!g) return;
+  $('cname').textContent = g.name + (g.type === 'private' ? ' 🔒' : '');
+  $('cstat').textContent = `${g.count} azо`;
+  $('ddel').classList.toggle('hidden', g.owner !== me && !isAdm);
+  if (g.type === 'private' && !unlocked.has(gname) && !isAdm) {
+    showLocked(); return;
+  }
+  hideLocked();
+  updateBar(g.members.includes(me));
+  pollMsgs();
+}
+
+function showLocked() {
+  $('locked').style.display = 'flex';
+  $('msgs').classList.add('hidden');
+  $('jbar').style.display = 'none';
+  $('mia').style.display = 'none';
+  $('lpw').value = ''; $('lerr').textContent = '';
+}
+
+function hideLocked() {
+  $('locked').style.display = 'none';
+  $('msgs').classList.remove('hidden');
+}
+
+async function unlock() {
+  const pw = $('lpw').value.trim(); $('lerr').textContent = '';
+  const g = gdata.find(x => x.name === cur); if (!g) return;
+  try {
+    const d = await post('/join_group', {username: me, group_name: cur, password: pw});
+    if (d.ok || d.error === "Siz allaqachon azoesiz!") {
+      unlocked.add(cur); await loadG();
+      hideLocked();
+      const gu = gdata.find(x => x.name === cur);
+      // Xabar yozish maydonini ko'rsatish
+      updateBar(gu ? gu.members.includes(me) : true);
+      pollMsgs();
+    } else {
+      $('lerr').textContent = d.error; shake('lpw');
+    }
+  } catch (e) { $('lerr').textContent = "Xatolik!"; }
+}
+
+// ── XABAR YOZISH MAYDONI BOSHQARUVI ──────────────────
+// isMem=true bo'lsa yozish maydoni ko'rinadi, aks holda qo'shilish bari
+function updateBar(isMem) {
+  $('mia').style.display = isMem ? 'flex' : 'none';
+  $('jbar').style.display = isMem ? 'none' : 'flex';
+}
+
+// ── POLLING — XABARLARNI OLISH ────────────────────────
+async function pollMsgs() {
+  if (!cur) return;
+  const g = gdata.find(x => x.name === cur);
+  if (g && g.type === 'private' && !unlocked.has(cur) && !isAdm) return;
+  try {
+    const d = await get(`/poll_group?group=${encodeURIComponent(cur)}&since=${off}`);
+    if (!d.ok) return;
+    const wasAtBottom = isAtBottom();
+    d.messages.forEach(m => addMsg(m));
+    off = d.total;
+    if (g) { g.members = d.members; g.count = d.members.length; }
+    // Online foydalanuvchilar soni + pulsing dot
+    $('cstat').innerHTML = `<span class="online-dot"></span>${d.members.length} azо`;
+    // Foydalanuvchi guruh azosimi tekshirish va barni yangilash
+    const isMem = d.members.includes(me) || isAdm;
+    updateBar(isMem);
+    // Faqat pastda bo'lsa avtomatik scroll
+    if (wasAtBottom) scrollBottom(false);
+    // Scroll tugmasini ko'rsatish
+    updateScrollBtn();
+  } catch (e) {}
+}
+
+function isAtBottom() {
+  const msgs = $('msgs');
+  return msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight < 80;
+}
+
+function scrollBottom(smooth = true) {
+  const msgs = $('msgs');
+  msgs.scrollTo({ top: msgs.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
+  $('scroll-btn').style.display = 'none';
+}
+
+function updateScrollBtn() {
+  const msgs = $('msgs');
+  const notAtBottom = msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight > 100;
+  $('scroll-btn').style.display = notAtBottom ? 'flex' : 'none';
+}
+
+$('msgs') && $('msgs').addEventListener('scroll', updateScrollBtn);
+
+// ── XABAR QO'SHISH ────────────────────────────────────
+function addMsg(m) {
+  const box = $('msgs');
+  if (m.type === 'system') {
+    const el = document.createElement('div');
+    el.className = 'smsg';
+    el.innerHTML = `<span>${esc(m.text)}</span>`;
+    box.appendChild(el);
+  } else {
+    const self = m.username === me;
+    const el = document.createElement('div');
+    el.className = 'mw ' + (self ? 'me' : 'them');
+    el.innerHTML = `
+      <div class="mmeta">
+        <span class="mun">${self ? 'Sen' : esc(m.username)}</span>
+        <span>${esc(m.time)}</span>
+      </div>
+      <div class="mbub">${esc(m.text)}</div>`;
+    box.appendChild(el);
+  }
+}
+
+// ── XABAR YUBORISH ────────────────────────────────────
+async function sendMsg() {
+  const inp = $('mi'), txt = inp.value.trim();
+  if (!txt || !cur) return;
+  // Send tugmasi pulse animatsiyasi
+  const btn = $('sbtn');
+  btn.classList.add('pulse');
+  setTimeout(() => btn.classList.remove('pulse'), 300);
+  inp.value = ''; inp.style.height = 'auto';
+  updateSendBtn();
+  try {
+    await post('/send_message', {username: me, group_name: cur, text: txt});
+    await pollMsgs();
+    scrollBottom(true);
+  } catch (e) {}
+}
+
+// Send tugmasini input holatiga qarab enable/disable
+function updateSendBtn() {
+  const btn = $('sbtn'), val = $('mi').value.trim();
+  btn.disabled = val.length === 0;
+}
+
+// ── CHIQISH / O'CHIRISH ───────────────────────────────
+async function doLeave() {
+  closeDrop();
+  if (!confirm(`"${cur}" guruhini tark etasizmi?`)) return;
+  await post('/leave_group', {username: me, group_name: cur}).catch(() => {});
+  unlocked.delete(cur); cur = ''; off = 0;
+  await loadG(); showHome();
+}
+
+async function doDelete() {
+  closeDrop();
+  if (!confirm(`"${cur}" guruhini o'chirasizmi? Barcha xabarlar ham o'chadi!`)) return;
+  await post('/delete_group', {username: me, group_name: cur}).catch(() => {});
+  unlocked.delete(cur); cur = ''; off = 0;
+  await loadG(); showHome();
+}
+
+// ── GURUH YARATISH ────────────────────────────────────
+function openCreate() {
+  $('cn').value = ''; $('cpwi').value = ''; $('cerr').textContent = '';
+  gt = 'public';
+  $('tp').className = 'tbtn sp'; $('tpr').className = 'tbtn';
+  $('cpw').classList.add('hidden');
+  $('cm').classList.add('on');
+}
+
+function selt(t) {
+  gt = t;
+  $('tp').className = 'tbtn' + (t === 'public' ? ' sp' : '');
+  $('tpr').className = 'tbtn' + (t === 'private' ? ' sm' : '');
+  $('cpw').classList.toggle('hidden', t !== 'private');
+}
+
+async function createGrp() {
+  const gn = $('cn').value.trim(), gpw = $('cpwi').value.trim(), e = $('cerr');
+  e.textContent = '';
+  try {
+    const d = await post('/create_group', {username: me, group_name: gn, type: gt, password: gpw});
+    if (!d.ok) { e.textContent = d.error; return; }
+    closeM('cm');
+    if (gt === 'private') unlocked.add(gn);
+    await loadG();
+    openGrpV(gn);
+  } catch (ex) { $('cerr').textContent = "Xatolik!"; }
+}
+
+// ── GURUHGA QO'SHILISH ────────────────────────────────
+function openJoin() {
+  const g = gdata.find(x => x.name === cur); if (!g) return;
+  $('jlbl').textContent = `Guruh: ${cur}`;
+  $('jpwi').value = ''; $('jerr').textContent = '';
+  $('jpw').classList.toggle('hidden', g.type !== 'private');
+  $('jm').classList.add('on');
+}
+
+async function joinGrp() {
+  const pw = $('jpwi').value.trim(), e = $('jerr');
+  e.textContent = '';
+  try {
+    const d = await post('/join_group', {username: me, group_name: cur, password: pw});
+    if (!d.ok) { e.textContent = d.error; return; }
+    const g = gdata.find(x => x.name === cur);
+    if (g?.type === 'private') unlocked.add(cur);
+    closeM('jm');
+    await loadG();
+    off = 0; $('msgs').innerHTML = '';
+    hideLocked();
+    // Guruhga qo'shilgandan so'ng darhol xabar yozish maydonini ko'rsat
+    updateBar(true);
+    pollMsgs();
+  } catch (ex) { $('jerr').textContent = "Xatolik!"; }
+}
+
+// ── ADMIN PANELI ──────────────────────────────────────
+async function showAdmin() {
+  if (!isAdm) return;
+  $('home').style.display = 'none';
+  $('chat').style.display = 'none';
+  // MUHIM: display:'flex' bo'lishi kerak, '' emas
+  $('admin').style.display = 'flex';
+  $('admin').style.flexDirection = 'column';
+  cur = ''; renderSB();
+
+  // Loading spinnerlarni ko'rsat
+  $('au-wrap').innerHTML = '<div class="adm-loading"><div class="adm-dot"></div><div class="adm-dot"></div><div class="adm-dot"></div></div>';
+  $('ag-wrap').innerHTML = '<div class="adm-loading"><div class="adm-dot"></div><div class="adm-dot"></div><div class="adm-dot"></div></div>';
+  $('su').textContent = '—'; $('sg').textContent = '—';
+
+  try {
+    const d = await post('/admin/stats', {username: me});
+    if (!d.ok) {
+      $('au-wrap').innerHTML = '<div class="ali" style="color:var(--a2)">Yuklab bo\'lmadi</div>';
+      $('ag-wrap').innerHTML = '<div class="ali" style="color:var(--a2)">Yuklab bo\'lmadi</div>';
+      return;
+    }
+    // Statistika
+    $('su').textContent = d.total_users;
+    $('sg').textContent = d.total_groups;
+
+    // Foydalanuvchilar ro'yxati (o'chirish tugmasi bilan)
+    const auWrap = $('au-wrap');
+    auWrap.innerHTML = '';
+    if (d.user_list.length === 0) {
+      auWrap.innerHTML = '<div class="ali" style="color:var(--td)">Foydalanuvchilar yo\'q</div>';
+    } else {
+      const alist = document.createElement('div');
+      alist.className = 'alist';
+      d.user_list.forEach(u => {
+        const li = document.createElement('div');
+        li.className = 'ali';
+        li.id = 'au-' + u;
+        li.innerHTML = `👤 ${esc(u)}<button class="ali-del" onclick="adminDelUser('${esc(u)}')">🗑 O'chir</button>`;
+        alist.appendChild(li);
+      });
+      auWrap.appendChild(alist);
+    }
+
+    // Guruhlar ro'yxati (o'chirish tugmasi bilan)
+    const agWrap = $('ag-wrap');
+    agWrap.innerHTML = '';
+    if (d.group_list.length === 0) {
+      agWrap.innerHTML = '<div class="ali" style="color:var(--td)">Guruhlar yo\'q</div>';
+    } else {
+      const alist2 = document.createElement('div');
+      alist2.className = 'alist';
+      d.group_list.forEach(g => {
+        const li = document.createElement('div');
+        li.className = 'ali';
+        li.id = 'ag-' + g.name;
+        li.innerHTML = `${g.type === 'private' ? '🔒' : '💬'} ${esc(g.name)}
+          <span style="font-size:.62rem;color:var(--td);margin-left:4px">(${esc(g.owner)})</span>
+          <span style="margin-left:auto;color:var(--td);font-size:.65rem">${g.members} azо</span>
+          <button class="ali-del" onclick="adminDelGroup('${esc(g.name)}')">🗑</button>`;
+        alist2.appendChild(li);
+      });
+      agWrap.appendChild(alist2);
+    }
+
+    // Texnik ishlar holati
+    const s = await get('/status');
+    maintOn = s.maintenance;
+    updateMBtn();
+  } catch (e) {
+    $('au-wrap').innerHTML = '<div class="ali" style="color:var(--a2)">Server xatosi</div>';
+    $('ag-wrap').innerHTML = '<div class="ali" style="color:var(--a2)">Server xatosi</div>';
+  }
+}
+
+// Admin — foydalanuvchini o'chirish
+async function adminDelUser(target) {
+  if (!confirm(`"${target}" foydalanuvchisini o'chirasizmi?\nUning barcha guruhlari ham o'chadi!`)) return;
+  try {
+    const d = await post('/admin/delete_user', {username: me, target_user: target});
+    if (d.ok) {
+      const el = $('au-' + target);
+      if (el) { el.style.animation = 'fadeOut .3s ease'; setTimeout(() => el.remove(), 300); }
+      // Statistikani yangilash
+      await showAdmin();
+    } else {
+      alert('Xatolik: ' + d.error);
+    }
+  } catch (e) { alert("Server bilan bog'lanib bo'lmadi!"); }
+}
+
+// Admin — guruhni o'chirish
+async function adminDelGroup(gname) {
+  if (!confirm(`"${gname}" guruhini o'chirasizmi?\nBarcha xabarlar ham o'chadi!`)) return;
+  try {
+    const d = await post('/admin/delete_group', {username: me, group_name: gname});
+    if (d.ok) {
+      const el = $('ag-' + gname);
+      if (el) { el.style.animation = 'fadeOut .3s ease'; setTimeout(() => el.remove(), 300); }
+      await loadG();
+      await showAdmin();
+    } else {
+      alert('Xatolik: ' + d.error);
+    }
+  } catch (e) { alert("Server bilan bog'lanib bo'lmadi!"); }
+}
+
+function updateMBtn() {
+  const b = $('mtbtn');
+  if (maintOn) {
+    b.textContent = "✓ Yangilanmoqda YOQILGAN — o'chirish";
+    b.className = 'mbtn mbtn-on';
+  } else {
+    b.textContent = '🔧 Yangilanmoqda rejimini yoqish';
+    b.className = 'mbtn mbtn-off';
+  }
+}
+
+async function toggleMaint() {
+  if (!maintOn) {
+    const msg = $('mta').value.trim() || 'Sayt yangilanmoqda...';
+    const d = await post('/admin/set_maintenance', {username: me, active: true, message: msg});
+    if (d.ok) { maintOn = true; updateMBtn(); }
+  } else {
+    await cancelMaint();
+  }
+}
+
+async function cancelMaint() {
+  const d = await post('/admin/set_maintenance', {username: me, active: false, message: ''});
+  if (d.ok) { maintOn = false; updateMBtn(); }
+}
+
+// ── DROPDOWN ──────────────────────────────────────────
+function toggleDrop(e) {
+  e.stopPropagation();
+  $('drop').classList.toggle('open');
+}
+function closeDrop() { $('drop').classList.remove('open'); }
+document.addEventListener('click', e => {
+  if (!e.target.closest('.dot-w')) closeDrop();
+});
+
+// ── KO'RINISHLAR ──────────────────────────────────────
+function showHome() {
+  $('home').style.display = '';
+  $('chat').style.display = 'none';
+  $('admin').style.display = 'none';
+  renderHome(); renderSB();
+}
+
+function showChat() {
+  $('home').style.display = 'none';
+  $('chat').style.display = 'flex';
+  $('admin').style.display = 'none';
+}
+
+function goBack() { cur = ''; off = 0; showHome(); }
+function toggleSB() { $('sb').classList.toggle('open'); }
+function closeM(id) { $(id).classList.remove('on'); }
+
+// ── INPUT HODISALARI ──────────────────────────────────
+// Textarea avtomatik balandlik
+$('mi').addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 90) + 'px';
+  updateSendBtn();
+});
+// Enter bilan yuborish (Shift+Enter yangi qator)
+$('mi').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault(); sendMsg();
+  }
+});
+
+// Auth input — Enter bilan
+$('ap').addEventListener('keydown', e => { if (e.key === 'Enter') doAuth(); });
+$('an').addEventListener('keydown', e => { if (e.key === 'Enter') $('ap').focus(); });
+// Qulf ochish — Enter bilan
+$('lpw').addEventListener('keydown', e => { if (e.key === 'Enter') unlock(); });
+
+// Modal overlay bosilganda yopish
+document.querySelectorAll('.ov').forEach(m =>
+  m.addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('on');
+  })
+);
+
+// Mobile — keyboard ochilganda viewport o'zgarmaydi
+if ('visualViewport' in window) {
+  window.visualViewport.addEventListener('resize', () => {
+    document.body.style.height = window.visualViewport.height + 'px';
+  });
+}
+
+// CSS fadeOut animatsiyasi admin elementlari uchun
+const style = document.createElement('style');
+style.textContent = '@keyframes fadeOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(20px)}}';
+document.head.appendChild(style);
+</script>
+</body>
+</html>
