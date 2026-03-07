@@ -1,0 +1,1682 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>MiniGram</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=Unbounded:wght@700;900&display=swap" rel="stylesheet"/>
+<style>
+/* ══════════════════════════════════════════
+   CSS O'ZGARUVCHILAR — qora/oq tema
+══════════════════════════════════════════ */
+:root {
+  --bg:#07080f; --s1:#0e1020; --s2:#151828; --s3:#1c1f35;
+  --tx:#eceef8; --td:#5a607a; --tm:#8890b0;
+  --a1:#7c6dfa; --a2:#fa6d9a; --a3:#6df5c8; --a4:#fac56d;
+  --br:rgba(124,109,250,.14); --br2:rgba(124,109,250,.22);
+  --glow:rgba(124,109,250,.18);
+  --card:rgba(14,16,32,.95); --bar:rgba(7,8,15,.92);
+  --inp:rgba(255,255,255,.04); --inp-bd:rgba(124,109,250,.2);
+  --shadow:rgba(0,0,0,.55);
+  --tl:linear-gradient(90deg,transparent,rgba(124,109,250,.5),rgba(250,109,154,.5),transparent);
+}
+:root.light {
+  --bg:#f5f6ff; --s1:#edf0ff; --s2:#e4e8ff; --s3:#dce0ff;
+  --tx:#0d0f1f; --td:#5a607a; --tm:#7880a0;
+  --br:rgba(100,90,200,.13); --br2:rgba(100,90,200,.25);
+  --glow:rgba(124,109,250,.1);
+  --card:rgba(237,240,255,.97); --bar:rgba(245,246,255,.94);
+  --inp:rgba(100,90,200,.05); --inp-bd:rgba(100,90,200,.22);
+  --shadow:rgba(80,80,160,.12);
+  --tl:linear-gradient(90deg,transparent,rgba(124,109,250,.35),rgba(250,109,154,.35),transparent);
+}
+
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0 }
+html,body { width:100%; height:100%; overflow:hidden; font-family:'Syne',sans-serif;
+  background:var(--bg); color:var(--tx); transition:background .35s,color .35s }
+
+/* ── CANVAS ── */
+#cv { position:fixed; inset:0; z-index:0; pointer-events:none }
+
+/* ── TEXNIK ISHLAR ── */
+#maint { position:fixed; inset:0; z-index:200; background:var(--bg);
+  display:none; align-items:center; justify-content:center; flex-direction:column;
+  gap:16px; text-align:center; padding:32px }
+.mt-icon { font-size:3.5rem; animation:float 3s ease-in-out infinite }
+.mt-ttl  { font-family:'Unbounded',sans-serif; font-size:1.4rem; font-weight:900;
+  letter-spacing:-.03em }
+.mt-msg  { font-size:.75rem; font-family:'DM Mono',monospace; color:var(--td);
+  line-height:1.8; max-width:320px }
+.mt-dots { display:flex; gap:8px; margin-top:8px }
+.mt-d    { width:8px; height:8px; border-radius:50%; animation:dp 1.4s ease-in-out infinite }
+.mt-d:nth-child(1){background:var(--a1)}
+.mt-d:nth-child(2){background:var(--a2);animation-delay:.2s}
+.mt-d:nth-child(3){background:var(--a3);animation-delay:.4s}
+
+/* ── AUTH ── */
+#auth { position:fixed; inset:0; z-index:30; display:flex;
+  align-items:center; justify-content:center;
+  opacity:0; pointer-events:none;
+  transition:opacity .4s cubic-bezier(.4,0,.2,1) }
+#auth.on { opacity:1; pointer-events:all }
+.acard { position:relative; background:linear-gradient(160deg,var(--card),rgba(14,16,32,.98));
+  border:1px solid var(--br2); border-radius:28px; padding:44px 36px;
+  width:min(390px,94vw); box-shadow:0 32px 80px var(--shadow);
+  animation:cu .6s cubic-bezier(.16,1,.3,1) both }
+.acard::before { content:''; position:absolute; top:0; left:18%; right:18%;
+  height:1px; background:var(--tl) }
+.aglow { position:absolute; inset:-50px;
+  background:radial-gradient(ellipse at 50% 40%,var(--glow),transparent 65%);
+  pointer-events:none; animation:gp 4s ease-in-out infinite; border-radius:40px }
+.brand { display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:6px }
+.brand-i { font-size:2rem; animation:float 3.5s ease-in-out infinite }
+.brand-n { font-family:'Unbounded',sans-serif; font-size:1.55rem; font-weight:900;
+  letter-spacing:-.04em;
+  background:linear-gradient(135deg,var(--a1),var(--a2));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text }
+.asub { font-size:.67rem; font-family:'DM Mono',monospace; color:var(--td);
+  text-align:center; margin-bottom:26px; letter-spacing:.06em }
+.tabs { display:flex; gap:3px; background:rgba(255,255,255,.04);
+  border-radius:14px; padding:3px; margin-bottom:20px }
+.tab { flex:1; padding:9px; border:none; background:none; color:var(--td);
+  font-family:'Syne',sans-serif; font-size:.82rem; font-weight:700;
+  border-radius:11px; cursor:pointer; transition:all .22s }
+.tab.on { background:linear-gradient(135deg,rgba(124,109,250,.22),rgba(250,109,154,.12));
+  color:var(--tx) }
+.inp { width:100%; background:var(--inp); border:1px solid var(--inp-bd);
+  border-radius:13px; padding:13px 15px; font-size:.88rem;
+  font-family:'DM Mono',monospace; color:var(--tx); outline:none;
+  margin-bottom:9px; transition:all .22s; letter-spacing:.02em }
+.inp:focus { border-color:var(--a1); background:rgba(124,109,250,.07);
+  box-shadow:0 0 0 4px rgba(124,109,250,.11) }
+.inp::placeholder { color:var(--td) }
+.btn { width:100%; border:none; border-radius:13px; padding:14px;
+  font-size:.88rem; font-weight:700; font-family:'Syne',sans-serif;
+  letter-spacing:.04em; color:#fff; cursor:pointer;
+  background:linear-gradient(135deg,var(--a1),var(--a2));
+  box-shadow:0 4px 22px rgba(124,109,250,.32); transition:all .2s;
+  position:relative; overflow:hidden; margin-top:2px }
+.btn:hover { transform:translateY(-2px); box-shadow:0 8px 30px rgba(124,109,250,.42) }
+.btn:active { transform:translateY(0); opacity:.9 }
+.btn:disabled { opacity:.38; cursor:not-allowed; transform:none }
+.btn.g2 { background:linear-gradient(135deg,var(--a3),#00c084);
+  box-shadow:0 4px 22px rgba(109,245,200,.22); color:var(--bg) }
+.btn.g3 { background:linear-gradient(135deg,var(--a4),var(--a2));
+  box-shadow:0 4px 22px rgba(250,197,109,.22) }
+.btn.gray { background:rgba(255,255,255,.06); border:1px solid var(--br);
+  color:var(--td); box-shadow:none }
+.btn.gray:hover { background:rgba(255,255,255,.1); color:var(--tx) }
+.btn.sm { padding:10px 16px; font-size:.8rem; width:auto }
+.btn.danger { background:linear-gradient(135deg,#e03535,var(--a2));
+  box-shadow:0 4px 18px rgba(224,53,53,.25) }
+.errt { font-size:.68rem; font-family:'DM Mono',monospace; color:var(--a2);
+  min-height:16px; margin-top:6px; text-align:center }
+.okt  { font-size:.68rem; font-family:'DM Mono',monospace; color:var(--a3);
+  min-height:16px; margin-top:6px; text-align:center }
+
+/* ── APP LAYOUT ── */
+#app { position:fixed; inset:0; z-index:10; display:flex; flex-direction:column;
+  opacity:0; pointer-events:none; transition:opacity .35s }
+#app.on { opacity:1; pointer-events:all }
+
+/* TOPBAR */
+.topbar { height:56px; display:flex; align-items:center; padding:0 14px; gap:10px;
+  background:var(--bar); backdrop-filter:blur(24px); border-bottom:1px solid var(--br);
+  flex-shrink:0; z-index:50; transition:background .35s,border-color .35s }
+.tb-ham { background:none; border:1px solid var(--br); border-radius:9px;
+  padding:6px 10px; color:var(--a1); font-size:.88rem; cursor:pointer;
+  transition:all .18s; flex-shrink:0; line-height:1.3 }
+.tb-ham:hover { background:rgba(124,109,250,.1); border-color:var(--br2) }
+.tb-logo { font-family:'Unbounded',sans-serif; font-size:.92rem; font-weight:900;
+  flex:1; letter-spacing:-.03em;
+  background:linear-gradient(90deg,var(--a1),var(--a2));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text }
+.tb-user { font-size:.64rem; font-family:'DM Mono',monospace; color:var(--a1);
+  background:rgba(124,109,250,.1); border:1px solid rgba(124,109,250,.2);
+  border-radius:999px; padding:4px 12px;
+  max-width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  flex-shrink:0 }
+.tb-user.adm { background:linear-gradient(135deg,rgba(250,197,109,.15),rgba(250,109,154,.1));
+  border-color:rgba(250,197,109,.3); color:var(--a4) }
+
+/* TEMA TOGGLE — pill switch */
+.theme-sw { position:relative; width:42px; height:24px;
+  background:var(--s2); border:1px solid var(--br2);
+  border-radius:999px; cursor:pointer; flex-shrink:0;
+  transition:background .35s,border-color .35s }
+.theme-sw::after { content:'🌙'; position:absolute; top:2px; left:2px;
+  width:18px; height:18px; border-radius:50%;
+  background:var(--s3); display:flex; align-items:center; justify-content:center;
+  font-size:.65rem; transition:transform .35s ease, background .35s;
+  line-height:18px; text-align:center }
+:root.light .theme-sw::after { content:'☀️'; transform:translateX(18px);
+  background:rgba(124,109,250,.15) }
+.tb-out { background:none; border:1px solid var(--br); border-radius:8px;
+  padding:5px 10px; color:var(--td); font-size:.64rem;
+  font-family:'DM Mono',monospace; cursor:pointer; transition:all .18s;
+  white-space:nowrap; flex-shrink:0 }
+.tb-out:hover { border-color:rgba(250,109,154,.4); color:var(--a2) }
+
+/* BODY */
+.body { flex:1; display:flex; overflow:hidden; position:relative }
+
+/* ── SIDEBAR ── */
+.sb { width:252px; flex-shrink:0; border-right:1px solid var(--br);
+  background:var(--bar); display:flex; flex-direction:column; overflow:hidden;
+  transition:transform .28s cubic-bezier(.16,1,.3,1),background .35s }
+@media(max-width:640px){
+  .sb { position:absolute; inset-block:0; left:0; z-index:40; transform:translateX(-100%) }
+  .sb.open { transform:translateX(0); box-shadow:8px 0 32px var(--shadow) }
+  .col { width:100% }
+}
+.sb-hd { padding:13px 10px 11px; border-bottom:1px solid var(--br); flex-shrink:0 }
+.sb-lbl { font-size:.57rem; font-family:'DM Mono',monospace; color:var(--td);
+  letter-spacing:.12em; text-transform:uppercase; margin-bottom:8px }
+.sb-new { width:100%; background:linear-gradient(135deg,var(--a1),var(--a2));
+  border:none; border-radius:11px; padding:9px; font-size:.79rem; font-weight:700;
+  color:#fff; cursor:pointer; font-family:'Syne',sans-serif;
+  box-shadow:0 3px 14px rgba(124,109,250,.28); transition:all .18s }
+.sb-new:hover { transform:scale(1.02) }
+.sb-adm { width:100%; margin-top:7px;
+  background:linear-gradient(135deg,rgba(250,197,109,.8),rgba(250,109,154,.7));
+  border:none; border-radius:11px; padding:9px; font-size:.79rem; font-weight:700;
+  color:#fff; cursor:pointer; font-family:'Syne',sans-serif; transition:all .18s }
+.sb-adm:hover { transform:scale(1.02) }
+.sb-list { flex:1; overflow-y:auto; padding:6px 4px }
+.sb-list::-webkit-scrollbar { width:2px }
+.sb-list::-webkit-scrollbar-thumb { background:var(--br); border-radius:2px }
+.gi { padding:10px 11px; border-radius:12px; cursor:pointer; margin-bottom:2px;
+  border:1px solid transparent; transition:all .16s; animation:gi-in .28s ease both }
+.gi:hover { background:rgba(124,109,250,.07); border-color:var(--br) }
+.gi.act { background:rgba(124,109,250,.13); border-color:var(--br2) }
+.gi-row { display:flex; align-items:center; gap:4px; margin-bottom:2px }
+.gi-nm  { font-size:.82rem; font-weight:700; flex:1;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.gi-sub { font-size:.59rem; font-family:'DM Mono',monospace; color:var(--td);
+  display:flex; gap:4px; align-items:center }
+.bd { font-size:.52rem; padding:2px 6px; border-radius:999px; font-weight:700;
+  flex-shrink:0; white-space:nowrap }
+.b1{background:rgba(109,245,200,.09);color:var(--a3);border:1px solid rgba(109,245,200,.2)}
+.b2{background:rgba(250,109,154,.08);color:var(--a2);border:1px solid rgba(250,109,154,.18)}
+.b3{background:rgba(124,109,250,.1) ;color:var(--a1);border:1px solid rgba(124,109,250,.22)}
+.b4{background:rgba(250,197,109,.09);color:var(--a4);border:1px solid rgba(250,197,109,.2)}
+
+/* ── ASOSIY USTUN ── */
+.col { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0 }
+
+/* ── HOME ── */
+#home { flex:1; overflow-y:auto; padding:20px 16px; display:flex; flex-direction:column }
+#home::-webkit-scrollbar { width:2px }
+#home::-webkit-scrollbar-thumb { background:var(--br); border-radius:2px }
+.hero { text-align:center; padding:44px 20px 28px }
+.hero-i { font-size:3rem; display:block; margin-bottom:12px;
+  animation:float 3.5s ease-in-out infinite }
+.hero-t { font-family:'Unbounded',sans-serif; font-size:1.15rem; font-weight:900;
+  background:linear-gradient(135deg,var(--a1),var(--a2));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  margin-bottom:8px; letter-spacing:-.03em }
+.hero-s { font-size:.7rem; font-family:'DM Mono',monospace; color:var(--td); line-height:1.8 }
+.hsec { margin-bottom:20px }
+.hsec-t { font-size:.57rem; font-family:'DM Mono',monospace; color:var(--td);
+  letter-spacing:.12em; text-transform:uppercase; margin-bottom:9px;
+  display:flex; align-items:center; gap:8px }
+.hsec-t::after { content:''; flex:1; height:1px; background:var(--br) }
+.hgi { padding:13px 14px; border-radius:14px; cursor:pointer; margin-bottom:5px;
+  border:1px solid var(--br); background:var(--card); transition:all .18s;
+  display:flex; align-items:center; gap:12px; animation:gi-in .32s ease both }
+.hgi:hover { background:rgba(124,109,250,.08); border-color:var(--br2);
+  transform:translateY(-2px); box-shadow:0 6px 24px var(--shadow) }
+.hgi-ico  { font-size:1.4rem; flex-shrink:0 }
+.hgi-info { flex:1; min-width:0 }
+.hgi-nm   { font-size:.85rem; font-weight:700; margin-bottom:3px;
+  display:flex; align-items:center; gap:5px; flex-wrap:wrap }
+.hgi-sub  { font-size:.6rem; font-family:'DM Mono',monospace; color:var(--td);
+  display:flex; gap:5px; align-items:center }
+
+/* ── ADMIN ── */
+#admin { flex:1; overflow-y:auto; padding:20px 16px; display:none; flex-direction:column }
+#admin::-webkit-scrollbar { width:2px }
+#admin::-webkit-scrollbar-thumb { background:var(--br); border-radius:2px }
+.adm-ttl { font-family:'Unbounded',sans-serif; font-size:1.1rem; font-weight:900;
+  background:linear-gradient(135deg,var(--a4),var(--a2));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  margin-bottom:3px; letter-spacing:-.03em }
+.adm-sub { font-size:.68rem; font-family:'DM Mono',monospace; color:var(--td); margin-bottom:18px }
+.acard { background:var(--card); border:1px solid var(--br); border-radius:18px;
+  padding:18px; margin-bottom:13px; box-shadow:0 4px 20px var(--shadow);
+  animation:cu .4s cubic-bezier(.16,1,.3,1) both; transition:background .35s }
+.acard-t { font-size:.57rem; font-family:'DM Mono',monospace; color:var(--td);
+  letter-spacing:.12em; text-transform:uppercase; margin-bottom:13px;
+  display:flex; align-items:center; gap:7px }
+.acard-t::after { content:''; flex:1; height:1px; background:var(--br) }
+.acard-t .plus-btn { margin-left:auto; background:linear-gradient(135deg,var(--a3),#00c084);
+  border:none; border-radius:8px; padding:3px 11px; font-size:.72rem; font-weight:700;
+  color:var(--bg); cursor:pointer; font-family:'Syne',sans-serif; transition:all .16s }
+.acard-t .plus-btn:hover { transform:scale(1.06) }
+.stat-g { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:4px }
+.sbox { background:rgba(124,109,250,.06); border:1px solid var(--br);
+  border-radius:12px; padding:14px; text-align:center }
+.snum { font-family:'Unbounded',sans-serif; font-size:1.7rem; font-weight:900;
+  background:linear-gradient(135deg,var(--a1),var(--a2));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text }
+.slbl { font-size:.6rem; font-family:'DM Mono',monospace; color:var(--td); margin-top:2px }
+.alist { max-height:200px; overflow-y:auto; padding-right:3px }
+.alist::-webkit-scrollbar { width:2px }
+.alist::-webkit-scrollbar-thumb { background:var(--br); border-radius:2px }
+.ali { padding:7px 9px; border-radius:8px; font-size:.75rem;
+  font-family:'DM Mono',monospace; color:var(--tx);
+  border-bottom:1px solid var(--br); display:flex; align-items:center; gap:6px }
+.ali:last-child { border-bottom:none }
+.ali-del { margin-left:auto; background:none; border:1px solid rgba(250,109,154,.3);
+  border-radius:6px; padding:3px 8px; font-size:.62rem; color:var(--a2);
+  cursor:pointer; font-family:'DM Mono',monospace; transition:all .14s; flex-shrink:0 }
+.ali-del:hover { background:rgba(250,109,154,.1); border-color:var(--a2) }
+.ald { display:flex; justify-content:center; padding:18px; gap:6px }
+.ald-d { width:7px; height:7px; border-radius:50%; animation:dp 1.4s ease-in-out infinite }
+.ald-d:nth-child(1){background:var(--a1)}
+.ald-d:nth-child(2){background:var(--a2);animation-delay:.2s}
+.ald-d:nth-child(3){background:var(--a3);animation-delay:.4s}
+.mta { width:100%; background:var(--inp); border:1px solid var(--br);
+  border-radius:12px; padding:11px 13px; font-size:.81rem;
+  font-family:'DM Mono',monospace; color:var(--tx); outline:none;
+  resize:none; height:70px; transition:border-color .22s; margin-bottom:9px }
+.mta:focus { border-color:var(--a1) }
+.mbt { width:100%; border:none; border-radius:12px; padding:12px;
+  font-size:.84rem; font-weight:700; color:#fff; cursor:pointer;
+  font-family:'Syne',sans-serif; transition:all .18s; margin-bottom:7px }
+.mbt:hover { transform:scale(1.01) }
+.mbt-on  { background:linear-gradient(135deg,#e03535,var(--a2)) }
+.mbt-off { background:linear-gradient(135deg,var(--a3),#00c084); color:var(--bg) }
+.mbt-cl  { background:linear-gradient(135deg,var(--a1),var(--a2)) }
+
+/* FON RASMLARI GRIDI (admin) */
+.bg-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:9px;
+  max-height:400px; overflow-y:auto; padding:2px }
+.bg-grid::-webkit-scrollbar { width:2px }
+.bg-grid::-webkit-scrollbar-thumb { background:var(--br); border-radius:2px }
+.bg-card { position:relative; border-radius:11px; overflow:hidden;
+  aspect-ratio:1; cursor:pointer; box-shadow:0 2px 10px var(--shadow);
+  transition:transform .16s; animation:bg-in .3s cubic-bezier(.16,1,.3,1) both }
+.bg-card:hover { transform:scale(1.04) }
+.bg-card img { width:100%; height:100%; object-fit:cover; display:block }
+.bg-ov { position:absolute; inset:0; background:rgba(0,0,0,.72);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:6px; opacity:0; transition:opacity .18s }
+.bg-card:hover .bg-ov { opacity:1 }
+.bg-del { background:#d42020; border:none; border-radius:8px; padding:6px 0;
+  width:76%; font-size:.68rem; font-weight:700; color:#fff;
+  cursor:pointer; font-family:'Syne',sans-serif }
+.bg-kp  { background:#00a86b; border:none; border-radius:8px; padding:6px 0;
+  width:76%; font-size:.68rem; font-weight:700; color:#fff;
+  cursor:pointer; font-family:'Syne',sans-serif }
+#bg-inp { display:none }
+
+/* ── CHAT ── */
+#chat { flex:1; display:none; flex-direction:column; overflow:hidden; position:relative }
+.chdr { height:54px; display:flex; align-items:center; justify-content:space-between;
+  padding:0 13px; border-bottom:1px solid var(--br);
+  background:var(--bar); backdrop-filter:blur(18px); flex-shrink:0;
+  transition:background .35s }
+.chdr-l { display:flex; align-items:center; gap:9px; min-width:0; flex:1 }
+.bk { background:none; border:none; color:var(--a1); font-size:1.05rem;
+  cursor:pointer; padding:4px 7px; border-radius:8px; transition:background .14s; flex-shrink:0 }
+.bk:hover { background:rgba(124,109,250,.1) }
+.c-nm { font-size:.88rem; font-weight:700; overflow:hidden;
+  text-overflow:ellipsis; white-space:nowrap; letter-spacing:-.01em;
+  cursor:default; transition:color .15s }
+.c-nm.owner { cursor:pointer }
+.c-nm.owner:hover { color:var(--a1) }
+.c-st { font-size:.58rem; font-family:'DM Mono',monospace; color:var(--td); margin-top:1px }
+.od { display:inline-block; width:6px; height:6px; border-radius:50%;
+  background:#2ecc71; margin-right:3px; vertical-align:middle;
+  animation:op 2s ease-in-out infinite }
+.dot-w { position:relative; flex-shrink:0 }
+.dot-b { background:none; border:none; color:var(--tx); font-size:1.35rem;
+  cursor:pointer; padding:2px 8px; border-radius:8px;
+  transition:background .14s; line-height:1; user-select:none }
+.dot-b:hover { background:rgba(255,255,255,.06) }
+.drop { position:absolute; top:44px; right:0; background:var(--s1);
+  backdrop-filter:blur(24px); border:1px solid var(--br); border-radius:14px;
+  min-width:190px; box-shadow:0 16px 48px var(--shadow); z-index:200;
+  overflow:hidden; visibility:hidden; opacity:0; transform:translateY(-8px) scale(.97);
+  transition:visibility 0s .18s,opacity .18s,transform .18s cubic-bezier(.16,1,.3,1) }
+.drop.open { visibility:visible; opacity:1; transform:none;
+  transition-delay:0s }
+.ddi { padding:12px 15px; font-size:.81rem; cursor:pointer;
+  transition:background .1s; display:flex; align-items:center; gap:9px;
+  color:var(--tx); font-weight:500 }
+.ddi:hover { background:rgba(124,109,250,.1) }
+.ddi.red { color:var(--a2) }
+.ddi.red:hover { background:rgba(250,109,154,.08) }
+
+/* QULFLANGAN */
+.locked { flex:1; display:none; flex-direction:column; align-items:center;
+  justify-content:center; gap:13px; padding:30px 24px; text-align:center }
+.lk-i  { font-size:3.2rem; animation:float 3.5s ease-in-out infinite }
+.lk-t  { font-size:.98rem; font-weight:700; letter-spacing:-.02em }
+.lk-s  { font-size:.7rem; font-family:'DM Mono',monospace; color:var(--td);
+  line-height:1.75; max-width:210px }
+.locked .inp,.locked .btn { max-width:260px; width:100% }
+
+/* XABARLAR WRAPPERI */
+.msgs-wrap { flex:1; overflow:hidden; position:relative }
+.msgs { width:100%; height:100%; overflow-y:auto; padding:13px 11px;
+  display:flex; flex-direction:column; gap:7px; scroll-behavior:smooth;
+  position:relative }
+.msgs::-webkit-scrollbar { width:2px }
+.msgs::-webkit-scrollbar-thumb { background:var(--br); border-radius:2px }
+/* Server dan keladigan fon */
+.msgs-bg { position:absolute; inset:0; background-size:cover;
+  background-position:center; background-repeat:no-repeat;
+  opacity:.18; pointer-events:none; z-index:0; transition:opacity .4s }
+.msgs > * { position:relative; z-index:1 }
+.smsg { text-align:center; font-size:.61rem; font-family:'DM Mono',monospace; color:var(--td) }
+.smsg span { background:rgba(255,255,255,.04); border:1px solid var(--br);
+  border-radius:999px; padding:3px 12px; display:inline-block }
+.mw { display:flex; flex-direction:column; max-width:74%; width:fit-content;
+  animation:mi .24s ease both }
+.mw.me   { align-self:flex-end; align-items:flex-end }
+.mw.them { align-self:flex-start; align-items:flex-start }
+.mmeta { font-size:.58rem; font-family:'DM Mono',monospace; color:var(--td);
+  margin-bottom:3px; display:flex; gap:5px; align-items:center }
+.mun { color:var(--a2); font-weight:500 }
+.mw.me .mun { color:var(--a1) }
+.mbub { padding:10px 14px; border-radius:16px; font-size:.87rem;
+  line-height:1.6; word-break:break-word; white-space:pre-wrap }
+.mw.them .mbub { background:rgba(255,255,255,.05); border:1px solid var(--br);
+  border-bottom-left-radius:4px }
+.mw.me .mbub { background:linear-gradient(135deg,rgba(124,109,250,.32),rgba(250,109,154,.18));
+  border:1px solid rgba(124,109,250,.22); border-bottom-right-radius:4px;
+  box-shadow:0 4px 14px rgba(124,109,250,.14) }
+/* Pastga scroll tugmasi */
+#scr-btn { position:absolute; bottom:12px; right:13px; width:36px; height:36px;
+  border-radius:50%; background:linear-gradient(135deg,var(--a1),var(--a2));
+  border:none; color:#fff; font-size:1rem; cursor:pointer;
+  display:none; align-items:center; justify-content:center;
+  box-shadow:0 4px 16px rgba(124,109,250,.38); z-index:10 }
+#scr-btn:hover { transform:scale(1.1) }
+
+/* QO'SHILISH BARI */
+.jbar { padding:12px 15px; border-top:1px solid var(--br);
+  background:var(--bar); display:none; align-items:center;
+  justify-content:space-between; gap:10px; flex-shrink:0 }
+.jbar p { font-size:.72rem; font-family:'DM Mono',monospace; color:var(--td) }
+.jbtn { background:linear-gradient(135deg,var(--a3),#00c084); border:none;
+  border-radius:10px; padding:10px 18px; font-size:.79rem; font-weight:700;
+  color:var(--bg); cursor:pointer; font-family:'Syne',sans-serif;
+  white-space:nowrap; transition:all .16s; box-shadow:0 3px 14px rgba(109,245,200,.22) }
+.jbtn:hover { transform:scale(1.04) }
+
+/* XABAR YOZISH */
+.mia { padding:9px 11px 13px; border-top:1px solid var(--br);
+  background:var(--bar); flex-shrink:0; display:none; transition:background .35s }
+.mrow { display:flex; gap:7px; align-items:flex-end }
+#mi { flex:1; background:var(--inp); border:1px solid var(--br); border-radius:13px;
+  padding:11px 14px; font-size:.87rem; font-family:'Syne',sans-serif;
+  color:var(--tx); outline:none; resize:none; max-height:90px; min-height:44px;
+  transition:all .22s; line-height:1.5 }
+#mi:focus { border-color:var(--a1); background:rgba(124,109,250,.06);
+  box-shadow:0 0 0 4px rgba(124,109,250,.1) }
+#mi::placeholder { color:var(--td) }
+.sbtn { width:44px; height:44px; border-radius:12px; flex-shrink:0;
+  background:linear-gradient(135deg,var(--a1),var(--a2)); border:none;
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  font-size:1rem; color:#fff; transition:all .16s;
+  box-shadow:0 3px 14px rgba(124,109,250,.32) }
+.sbtn:hover:not(:disabled) { transform:scale(1.08); box-shadow:0 6px 22px rgba(124,109,250,.42) }
+.sbtn:active:not(:disabled) { transform:scale(.92) }
+.sbtn:disabled { opacity:.34; cursor:not-allowed }
+.sbtn.pulse { animation:sp .28s ease }
+
+/* ════════════════════════════════════════
+   GURUH SOZLAMALARI SAHIFASI
+════════════════════════════════════════ */
+#grp-set { flex:1; display:none; flex-direction:column; overflow:hidden }
+.gs-hdr { height:54px; display:flex; align-items:center; gap:10px; padding:0 13px;
+  border-bottom:1px solid var(--br); background:var(--bar); flex-shrink:0 }
+.gs-ttl { font-size:.92rem; font-weight:800; letter-spacing:-.02em;
+  background:linear-gradient(135deg,var(--a1),var(--a2));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text }
+.gs-body { flex:1; overflow-y:auto; padding:18px 15px }
+.gs-body::-webkit-scrollbar { width:2px }
+.gs-body::-webkit-scrollbar-thumb { background:var(--br); border-radius:2px }
+.gs-card { background:var(--card); border:1px solid var(--br); border-radius:18px;
+  padding:18px; margin-bottom:13px; box-shadow:0 4px 18px var(--shadow);
+  animation:cu .38s cubic-bezier(.16,1,.3,1) both; transition:background .35s }
+.gs-ct { font-size:.57rem; font-family:'DM Mono',monospace; color:var(--td);
+  letter-spacing:.12em; text-transform:uppercase; margin-bottom:13px;
+  display:flex; align-items:center; gap:7px }
+.gs-ct::after { content:''; flex:1; height:1px; background:var(--br) }
+
+/* Fon tanlash gridi (sozlamalar) — 3 ustun, 80×80 */
+.gs-bg-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
+  max-height:260px; overflow-y:auto; margin-bottom:11px }
+.gs-bg-grid::-webkit-scrollbar { width:2px }
+.gs-bg-grid::-webkit-scrollbar-thumb { background:var(--br); border-radius:2px }
+.gs-bg-item { aspect-ratio:1; border-radius:10px; overflow:hidden;
+  cursor:pointer; border:2px solid transparent; transition:all .2s; position:relative }
+.gs-bg-item img { width:100%; height:100%; object-fit:cover; display:block }
+.gs-bg-item.sel { border-color:var(--a1); transform:scale(1.06);
+  box-shadow:0 0 0 3px rgba(124,109,250,.28) }
+.gs-bg-item:hover:not(.sel) { transform:scale(1.03) }
+.gs-empty { font-size:.7rem; font-family:'DM Mono',monospace; color:var(--td);
+  text-align:center; padding:18px 0; grid-column:1/-1 }
+
+/* Fon preview */
+.gs-prev { width:100%; height:100px; border-radius:13px; border:1px solid var(--br);
+  background:var(--s2); overflow:hidden; position:relative; margin-bottom:13px;
+  display:flex; align-items:center; justify-content:center }
+.gs-prev-bg { position:absolute; inset:0; background-size:cover;
+  background-position:center; opacity:.2 }
+.gs-prev-msg { position:relative; z-index:1;
+  background:rgba(124,109,250,.22); border:1px solid rgba(124,109,250,.3);
+  border-radius:11px; padding:7px 13px; font-size:.78rem }
+
+/* ── MODAL OVERLAY ── */
+.ov { position:fixed; inset:0; z-index:100; background:rgba(0,0,0,.72);
+  backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity .2s }
+.ov.on { opacity:1; pointer-events:all }
+.mbox { background:linear-gradient(160deg,var(--card),rgba(14,16,32,.99));
+  border:1px solid var(--br2); border-radius:24px; padding:30px 26px;
+  width:min(350px,94vw); box-shadow:0 24px 64px var(--shadow);
+  animation:cu .35s cubic-bezier(.16,1,.3,1) both; position:relative; overflow:hidden }
+.mbox::before { content:''; position:absolute; top:0; left:15%; right:15%;
+  height:1px; background:var(--tl) }
+.mttl { font-size:1.02rem; font-weight:800; margin-bottom:16px; letter-spacing:-.02em;
+  background:linear-gradient(135deg,var(--a1),var(--a2));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text }
+.trow { display:flex; gap:6px; margin-bottom:11px }
+.tbtn { flex:1; padding:9px; border-radius:10px; border:1px solid var(--br);
+  background:none; color:var(--td); font-family:'Syne',sans-serif;
+  font-weight:700; font-size:.79rem; cursor:pointer; transition:all .16s }
+.tbtn.sp { border-color:rgba(109,245,200,.3); color:var(--a3); background:rgba(109,245,200,.07) }
+.tbtn.sm { border-color:rgba(250,109,154,.3); color:var(--a2); background:rgba(250,109,154,.07) }
+.mbtns { display:flex; gap:7px; margin-top:9px }
+.bcnl { flex:1; border:1px solid var(--br); border-radius:12px; padding:13px;
+  font-size:.84rem; font-weight:700; color:var(--td); cursor:pointer;
+  font-family:'Syne',sans-serif; background:none; transition:all .16s }
+.bcnl:hover { background:rgba(255,255,255,.05); color:var(--tx) }
+.hidden { display:none !important }
+
+/* ── ANIMATSIYALAR ── */
+@keyframes cu   { from{opacity:0;transform:translateY(24px) scale(.96)}to{opacity:1;transform:none} }
+@keyframes gi-in{ from{opacity:0;transform:translateX(-7px)}to{opacity:1;transform:none} }
+@keyframes mi   { from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none} }
+@keyframes float{ 0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)} }
+@keyframes gp   { 0%,100%{opacity:.6}50%{opacity:1} }
+@keyframes dp   { 0%,80%,100%{transform:scale(.6);opacity:.4}40%{transform:scale(1);opacity:1} }
+@keyframes op   { 0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.65)} }
+@keyframes sp   { 0%{transform:scale(1)}50%{transform:scale(1.18)}100%{transform:scale(1)} }
+@keyframes bg-in{ from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)} }
+@keyframes shake{ 0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)} }
+</style>
+</head>
+<body>
+
+<!-- CANVAS FON -->
+<canvas id="cv"></canvas>
+
+<!-- TEXNIK ISHLAR -->
+<div id="maint">
+  <span class="mt-icon">🔧</span>
+  <div class="mt-ttl">Yangilanmoqda</div>
+  <div class="mt-msg" id="mt-msg">Tez orada qaytamiz...</div>
+  <div class="mt-dots">
+    <div class="mt-d"></div><div class="mt-d"></div><div class="mt-d"></div>
+  </div>
+</div>
+
+<!-- AUTH -->
+<div id="auth">
+  <div style="position:relative;width:min(390px,94vw)">
+    <div class="aglow"></div>
+    <div class="acard">
+      <div class="brand">
+        <span class="brand-i">✉️</span>
+        <span class="brand-n">MiniGram</span>
+      </div>
+      <p class="asub">// real vaqt · anonim · xavfsiz</p>
+      <div class="tabs">
+        <button class="tab on" onclick="switchTab('login')">Kirish</button>
+        <button class="tab"    onclick="switchTab('reg')">Ro'yxat</button>
+      </div>
+      <input class="inp" id="a-u" type="text" placeholder="Foydalanuvchi nomi"
+             maxlength="20" autocomplete="off" spellcheck="false"/>
+      <input class="inp" id="a-p" type="password" placeholder="Parol" maxlength="40"/>
+      <button class="btn" id="a-btn" onclick="doAuth()">Kirish →</button>
+      <div class="errt" id="a-err"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ASOSIY APP -->
+<div id="app">
+  <div class="topbar">
+    <button class="tb-ham" onclick="toggleSB()">☰</button>
+    <span  class="tb-logo">✉️ MiniGram</span>
+    <span  class="tb-user" id="tb-u">—</span>
+    <!-- Tema toggle switch -->
+    <div class="theme-sw" id="tsw" onclick="toggleTheme()" title="Tema almashtirish"></div>
+    <button class="tb-out" onclick="doLogout()">Chiqish</button>
+  </div>
+
+  <div class="body">
+    <!-- SIDEBAR -->
+    <div class="sb" id="sb">
+      <div class="sb-hd">
+        <div class="sb-lbl">Guruhlar</div>
+        <button class="sb-new" onclick="openCreate()">+ Yangi guruh</button>
+        <button class="sb-adm hidden" id="sb-adm" onclick="showAdmin()">⚙ Admin panel</button>
+      </div>
+      <div class="sb-list" id="sb-list"></div>
+    </div>
+
+    <!-- USTUN -->
+    <div class="col">
+
+      <!-- HOME -->
+      <div id="home">
+        <div class="hero" id="hero">
+          <span class="hero-i">✉️</span>
+          <div class="hero-t">MiniGram</div>
+          <p class="hero-s">Guruh tanlang yoki yangi guruh oching</p>
+        </div>
+        <div class="hsec hidden" id="sec-my">
+          <div class="hsec-t">Mening guruhlarim</div>
+          <div id="lst-my"></div>
+        </div>
+        <div class="hsec hidden" id="sec-all">
+          <div class="hsec-t">Barcha guruhlar</div>
+          <div id="lst-all"></div>
+        </div>
+      </div>
+
+      <!-- ADMIN -->
+      <div id="admin">
+        <div class="adm-ttl">⚙ Admin Panel</div>
+        <div class="adm-sub">MiniGram boshqaruvi · lord</div>
+        <div class="acard">
+          <div class="acard-t">Statistika</div>
+          <div class="stat-g">
+            <div class="sbox"><div class="snum" id="a-su">—</div><div class="slbl">Foydalanuvchi</div></div>
+            <div class="sbox"><div class="snum" id="a-sg">—</div><div class="slbl">Guruh</div></div>
+          </div>
+        </div>
+        <div class="acard">
+          <div class="acard-t">Foydalanuvchilar</div>
+          <div id="a-users"><div class="ald"><div class="ald-d"></div><div class="ald-d"></div><div class="ald-d"></div></div></div>
+        </div>
+        <div class="acard">
+          <div class="acard-t">Guruhlar</div>
+          <div id="a-groups"><div class="ald"><div class="ald-d"></div><div class="ald-d"></div><div class="ald-d"></div></div></div>
+        </div>
+        <!-- FON RASMLARI BO'LIMI -->
+        <div class="acard">
+          <div class="acard-t">
+            Guruh Fonlari
+            <button class="plus-btn" onclick="$i('bg-inp').click()">+ Yuklash</button>
+          </div>
+          <input type="file" id="bg-inp" accept="image/*" onchange="uploadBg(this)"/>
+          <div class="bg-grid" id="bg-grid">
+            <div class="ald" style="grid-column:1/-1">
+              <div class="ald-d"></div><div class="ald-d"></div><div class="ald-d"></div>
+            </div>
+          </div>
+        </div>
+        <!-- TEXNIK ISHLAR -->
+        <div class="acard">
+          <div class="acard-t">Texnik ishlar rejimi</div>
+          <textarea class="mta" id="m-ta" placeholder="Foydalanuvchilarga ko'rinadigan xabar...">Sayt yangilanmoqda, tez orada qaytamiz...</textarea>
+          <button class="mbt mbt-off" id="m-btn" onclick="toggleMaint()">🔧 Yangilanmoqda rejimini yoqish</button>
+          <button class="mbt mbt-cl"               onclick="cancelMaint()">✓ Saytni ochiq qoldirish</button>
+        </div>
+      </div>
+
+      <!-- CHAT -->
+      <div id="chat">
+        <div class="chdr">
+          <div class="chdr-l">
+            <button class="bk" onclick="goBack()">⬅</button>
+            <div style="min-width:0">
+              <div class="c-nm" id="c-nm">—</div>
+              <div class="c-st" id="c-st">—</div>
+            </div>
+          </div>
+          <div class="dot-w">
+            <button class="dot-b" onclick="toggleDrop(event)">⋮</button>
+            <div class="drop" id="drop">
+              <div class="ddi"     onclick="doLeave()">🚪 Guruhni tark etish</div>
+              <div class="ddi red hidden" id="d-del" onclick="doDelete()">🗑 Guruhni o'chirish</div>
+            </div>
+          </div>
+        </div>
+        <!-- Qulflangan ko'rinish -->
+        <div class="locked" id="locked">
+          <span class="lk-i">🔒</span>
+          <div class="lk-t">Maxfiy guruh</div>
+          <div class="lk-s">Chatni ochish uchun guruh parolini kiriting</div>
+          <input class="inp" id="lk-pw" type="password" placeholder="Guruh paroli" maxlength="40"/>
+          <div class="errt" id="lk-err"></div>
+          <button class="btn" onclick="doUnlock()">Kirish →</button>
+        </div>
+        <!-- Xabarlar -->
+        <div class="msgs-wrap">
+          <div class="msgs hidden" id="msgs">
+            <div class="msgs-bg" id="msgs-bg"></div>
+          </div>
+          <button id="scr-btn" onclick="scrollBot(true)">↓</button>
+        </div>
+        <!-- Qo'shilish bari -->
+        <div class="jbar" id="jbar">
+          <p>Siz bu guruh azosi emassiz</p>
+          <button class="jbtn" onclick="openJoin()">Qo'shilish →</button>
+        </div>
+        <!-- Xabar yozish maydoni -->
+        <div class="mia" id="mia">
+          <div class="mrow">
+            <textarea id="mi" placeholder="Xabar yozing..." rows="1"></textarea>
+            <button class="sbtn" id="s-btn" onclick="sendMsg()" disabled>➤</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- GURUH SOZLAMALARI -->
+      <div id="grp-set">
+        <div class="gs-hdr">
+          <button class="bk" onclick="closeGS()">⬅ Orqaga</button>
+          <span class="gs-ttl" id="gs-ttl">Sozlamalar</span>
+        </div>
+        <div class="gs-body">
+
+          <!-- KARTA 1: Nom o'zgartirish -->
+          <div class="gs-card">
+            <div class="gs-ct">Guruh nomini o'zgartirish</div>
+            <input class="inp" id="gs-nm" placeholder="Yangi nom" maxlength="30"/>
+            <div class="errt" id="gs-nm-e"></div>
+            <div class="okt"  id="gs-nm-ok"></div>
+            <button class="btn sm" onclick="saveGName()">💾 Saqlash</button>
+          </div>
+
+          <!-- KARTA 2: Fon tanlash -->
+          <div class="gs-card">
+            <div class="gs-ct">Guruh fon rasmi</div>
+            <!-- Preview -->
+            <div class="gs-prev">
+              <div class="gs-prev-bg" id="gs-prev-bg"></div>
+              <div class="gs-prev-msg">💬 Fon namunasi</div>
+            </div>
+            <!-- Rasmlar gridi (serverdan) -->
+            <div class="gs-bg-grid" id="gs-bg-grid">
+              <div class="gs-empty">Yuklanmoqda...</div>
+            </div>
+            <div class="errt" id="gs-bg-e"></div>
+            <div class="okt"  id="gs-bg-ok"></div>
+            <button class="btn sm danger" onclick="setGroupBg('')">🗑 Fonni olib tashlash</button>
+          </div>
+
+          <!-- KARTA 3: Parol o'zgartirish (faqat private) -->
+          <div class="gs-card hidden" id="gs-pw-card">
+            <div class="gs-ct">Guruh parolini o'zgartirish</div>
+            <input class="inp" id="gs-opw" type="password" placeholder="Eski parol" maxlength="40"/>
+            <input class="inp" id="gs-npw" type="password" placeholder="Yangi parol (min 4 belgi)" maxlength="40"/>
+            <input class="inp" id="gs-npw2" type="password" placeholder="Yangi parolni takrorlang" maxlength="40"/>
+            <div class="errt" id="gs-pw-e"></div>
+            <div class="okt"  id="gs-pw-ok"></div>
+            <button class="btn sm" onclick="saveGPw()">🔑 Parolni yangilash</button>
+          </div>
+
+        </div>
+      </div>
+
+    </div><!-- /col -->
+  </div><!-- /body -->
+</div><!-- /app -->
+
+<!-- GURUH YARATISH MODALI -->
+<div class="ov" id="m-create">
+  <div class="mbox">
+    <div class="mttl">➕ Yangi Guruh</div>
+    <input class="inp" id="cr-nm" placeholder="Guruh nomi" maxlength="30" autocomplete="off"/>
+    <div class="trow">
+      <button class="tbtn sp" id="t-pub" onclick="selType('public')">🌐 Ommaviy</button>
+      <button class="tbtn"    id="t-prv" onclick="selType('private')">🔒 Maxfiy</button>
+    </div>
+    <div id="cr-pw-wrap" class="hidden">
+      <input class="inp" id="cr-pw" type="password" placeholder="Parol (min 4 belgi)" maxlength="40"/>
+    </div>
+    <div class="errt" id="cr-err"></div>
+    <div class="mbtns">
+      <button class="btn" style="flex:1;margin-top:0" onclick="createGrp()">Yaratish</button>
+      <button class="bcnl" onclick="closeM('m-create')">Bekor</button>
+    </div>
+  </div>
+</div>
+
+<!-- QO'SHILISH MODALI -->
+<div class="ov" id="m-join">
+  <div class="mbox">
+    <div class="mttl">🔑 Guruhga Qo'shilish</div>
+    <p style="font-size:.74rem;color:var(--td);font-family:'DM Mono',monospace;margin-bottom:13px" id="j-lbl">—</p>
+    <div id="j-pw-wrap" class="hidden">
+      <input class="inp" id="j-pw" type="password" placeholder="Guruh paroli" maxlength="40"/>
+    </div>
+    <div class="errt" id="j-err"></div>
+    <div class="mbtns">
+      <button class="btn g2" style="flex:1;margin-top:0" onclick="joinGrp()">Qo'shilish</button>
+      <button class="bcnl" onclick="closeM('m-join')">Bekor</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════
+   ASOSIY O'ZGARUVCHILAR
+════════════════════════════════════════════════════ */
+const API = 'https://hackfollow111.pythonanywhere.com';
+
+let me = '', isAdm = false;
+let cur = '';       // Hozirgi ochiq guruh nomi
+let off = 0;        // Polling offset
+let timer = null;   // Polling timer
+let gdata = [];     // Guruhlar massivi
+let unlocked = new Set();  // Ochilgan maxfiy guruhlar
+let maintOn = false;
+let prevGStr = '';  // DOM diffing uchun oldingi holat satri
+let crType = 'public';
+
+/* ════════════════════════════════════════════════════
+   YORDAMCHI FUNKSIYALAR
+════════════════════════════════════════════════════ */
+// ID bo'yicha element
+const $i = id => document.getElementById(id);
+// XSS dan himoya
+const esc = s => String(s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+// Silkitish animatsiyasi
+const shake = el => {
+  el.style.animation = 'none';
+  requestAnimationFrame(() => { el.style.animation = 'shake .38s ease' });
+};
+// Muvaffaqiyat xabarini 2s ko'rsat
+const showOk = (id, msg) => {
+  $i(id).textContent = msg;
+  setTimeout(() => { if ($i(id)) $i(id).textContent = '' }, 2000);
+};
+// POST so'rovi
+const post = (url, body) => fetch(API + url, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(body)
+}).then(r => r.json());
+// GET so'rovi
+const get = url => fetch(API + url).then(r => r.json());
+
+/* ════════════════════════════════════════════════════
+   CANVAS ZARRACHALAR FONI
+════════════════════════════════════════════════════ */
+const cv = $i('cv'), cx = cv.getContext('2d');
+let W, H, pts = [];
+const resize = () => { W = cv.width = innerWidth; H = cv.height = innerHeight };
+resize(); addEventListener('resize', resize);
+
+class Pt {
+  reset() {
+    this.x = Math.random() * W; this.y = Math.random() * H;
+    this.vx = (Math.random() - .5) * .27; this.vy = (Math.random() - .5) * .27;
+    this.r  = Math.random() * 1.1 + .3;
+    this.c  = ['rgba(124,109,250,','rgba(250,109,154,','rgba(109,245,200,'][~~(Math.random() * 3)];
+    this.a  = Math.random() * .2 + .04;
+  }
+  constructor() { this.reset() }
+  update() {
+    this.x += this.vx; this.y += this.vy;
+    if (this.x < 0 || this.x > W || this.y < 0 || this.y > H) this.reset();
+  }
+  draw(light) {
+    cx.beginPath(); cx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+    cx.fillStyle = this.c + (light ? this.a * .4 : this.a) + ')';
+    cx.fill();
+  }
+}
+for (let i = 0; i < 55; i++) pts.push(new Pt());
+
+(function loop() {
+  const light = document.documentElement.classList.contains('light');
+  cx.clearRect(0, 0, W, H);
+  const g = cx.createRadialGradient(W * .3, H * .25, 0, W * .3, H * .25, W * .5);
+  g.addColorStop(0, light ? 'rgba(124,109,250,.02)' : 'rgba(124,109,250,.04)');
+  g.addColorStop(1, 'transparent');
+  cx.fillStyle = g; cx.fillRect(0, 0, W, H);
+  pts.forEach(p => { p.update(); p.draw(light) });
+  const la = light ? .01 : .025;
+  for (let i = 0; i < pts.length; i++)
+    for (let j = i + 1; j < pts.length; j++) {
+      const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y;
+      const d = Math.sqrt(dx * dx + dy * dy);
+      if (d < 68) {
+        cx.beginPath(); cx.moveTo(pts[i].x, pts[i].y); cx.lineTo(pts[j].x, pts[j].y);
+        cx.strokeStyle = `rgba(124,109,250,${la * (1 - d / 68)})`;
+        cx.lineWidth = .5; cx.stroke();
+      }
+    }
+  requestAnimationFrame(loop);
+})();
+
+/* ════════════════════════════════════════════════════
+   TEMA — pill switch
+════════════════════════════════════════════════════ */
+function toggleTheme() {
+  const html = document.documentElement;
+  html.classList.toggle('light');
+  localStorage.setItem('mg_theme', html.classList.contains('light') ? 'light' : 'dark');
+}
+function applyTheme() {
+  if (localStorage.getItem('mg_theme') === 'light')
+    document.documentElement.classList.add('light');
+}
+
+/* ════════════════════════════════════════════════════
+   ISHGA TUSHIRISH
+════════════════════════════════════════════════════ */
+window.addEventListener('DOMContentLoaded', async () => {
+  applyTheme();
+  // Texnik ishlarni tekshirish
+  try {
+    const s = await get('/status');
+    if (s.maintenance) { showMaint(s.message); await tryAuto(true); return; }
+  } catch (e) {}
+  await tryAuto(false);
+});
+
+async function tryAuto(maintMode) {
+  const u = localStorage.getItem('mg_u'), p = localStorage.getItem('mg_p');
+  if (u && p) {
+    try {
+      const d = await post('/login', { username: u, password: p });
+      if (d.ok) {
+        me = d.username; isAdm = !!d.is_admin;
+        // Admin bo'lsa texnik ishlar paytida ham kirsin
+        if (maintMode && !isAdm) return;
+        startApp(); return;
+      }
+    } catch (e) {}
+  }
+  if (!maintMode) $i('auth').classList.add('on');
+}
+
+function showMaint(msg) {
+  $i('maint').style.display = 'flex';
+  $i('mt-msg').textContent = msg || 'Tez orada qaytamiz...';
+}
+function hideMaint() { $i('maint').style.display = 'none' }
+
+/* ════════════════════════════════════════════════════
+   AUTH
+════════════════════════════════════════════════════ */
+let amode = 'login';
+function switchTab(m) {
+  amode = m;
+  document.querySelectorAll('.tab').forEach((t, i) =>
+    t.classList.toggle('on', (m === 'login' && i === 0) || (m === 'reg' && i === 1))
+  );
+  $i('a-btn').textContent = m === 'login' ? 'Kirish →' : "Ro'yxatdan o'tish →";
+  $i('a-err').textContent = '';
+}
+async function doAuth() {
+  const n = $i('a-u').value.trim(), p = $i('a-p').value.trim(), e = $i('a-err');
+  e.textContent = '';
+  try {
+    const d = await post(amode === 'login' ? '/login' : '/register', { username: n, password: p });
+    if (!d.ok) { e.textContent = d.error; shake(e); return }
+    me = d.username; isAdm = !!d.is_admin;
+    localStorage.setItem('mg_u', n); localStorage.setItem('mg_p', p);
+    startApp();
+  } catch (ex) { e.textContent = "Server bilan bog'lanib bo'lmadi!" }
+}
+
+/* ════════════════════════════════════════════════════
+   APP ISHGA TUSHIRISH
+════════════════════════════════════════════════════ */
+function startApp() {
+  hideMaint();
+  $i('auth').classList.remove('on');
+  $i('app').classList.add('on');
+  $i('tb-u').textContent = me;
+  if (isAdm) { $i('tb-u').classList.add('adm'); $i('sb-adm').classList.remove('hidden') }
+  else        { $i('tb-u').classList.remove('adm'); $i('sb-adm').classList.add('hidden') }
+  loadGroups();
+  clearInterval(timer);
+  timer = setInterval(bgTick, 2500);
+}
+
+async function doLogout() {
+  clearInterval(timer); timer = null;
+  try { await post('/logout', { username: me }) } catch (e) {}
+  localStorage.removeItem('mg_u'); localStorage.removeItem('mg_p');
+  me = ''; isAdm = false; cur = ''; off = 0; gdata = []; unlocked = new Set();
+  $i('app').classList.remove('on');
+  prevGStr = '';
+  try {
+    const s = await get('/status');
+    if (s.maintenance) { showMaint(s.message); return }
+  } catch (e) {}
+  hideMaint(); $i('auth').classList.add('on'); showHome();
+}
+
+/* ════════════════════════════════════════════════════
+   POLLING — 2.5 soniyada bir marta
+════════════════════════════════════════════════════ */
+async function bgTick() {
+  await loadGroups(true);
+  if (cur) await pollMsgs();
+  if (!isAdm) {
+    try {
+      const s = await get('/status');
+      if (s.maintenance) { clearInterval(timer); $i('app').classList.remove('on'); showMaint(s.message) }
+    } catch (e) {}
+  }
+}
+
+/* ════════════════════════════════════════════════════
+   GURUHLARNI YUKLASH — DOM DIFFING
+════════════════════════════════════════════════════ */
+async function loadGroups(silent = false) {
+  try {
+    const d = await get('/groups');
+    if (!d.ok) return;
+    // DOM diffing: agar ma'lumot o'zgarmagan bo'lsa qayta render qilma
+    const newStr = JSON.stringify(d.groups.map(g => ({
+      n: g.name, o: g.owner, t: g.type, c: g.count, bg: g.bg_image,
+      m: [...g.members].sort().join(',')
+    })));
+    if (silent && newStr === prevGStr) {
+      // Faqat hozirgi guruh azolari sonini yangilash
+      if (cur) {
+        const g = d.groups.find(x => x.name === cur);
+        if (g) $i('c-st').innerHTML = `<span class="od"></span>${g.count} azо`;
+      }
+      return;
+    }
+    prevGStr = newStr;
+    gdata = d.groups;
+    renderSB();
+    renderHome();
+    if (cur) {
+      const g = gdata.find(x => x.name === cur);
+      if (g) $i('c-st').innerHTML = `<span class="od"></span>${g.count} azо`;
+    }
+  } catch (e) {}
+}
+
+/* ════════════════════════════════════════════════════
+   SIDEBAR RENDER
+════════════════════════════════════════════════════ */
+function renderSB() {
+  const w = $i('sb-list');
+  w.innerHTML = '';
+  if (!gdata.length) {
+    w.innerHTML = '<div style="text-align:center;padding:20px;font-size:.65rem;font-family:DM Mono,monospace;color:var(--td)">Guruh yo\'q</div>';
+    return;
+  }
+  gdata.forEach((g, i) => {
+    const iM = g.members.includes(me), iO = g.owner === me, iA = g.name === cur;
+    const el = document.createElement('div');
+    el.className = 'gi' + (iA ? ' act' : '');
+    el.style.animationDelay = i * 0.03 + 's';
+    el.dataset.gname = g.name;
+    el.innerHTML = `
+      <div class="gi-row">
+        <span class="gi-nm">${esc(g.name)}${g.type === 'private' ? ' 🔒' : ''}</span>
+        ${iO ? '<span class="bd b3">Ega</span>' : iM ? '<span class="bd b4">Azо</span>' : ''}
+      </div>
+      <div class="gi-sub">
+        <span class="bd ${g.type === 'public' ? 'b1' : 'b2'}">${g.type === 'public' ? 'Ommaviy' : 'Maxfiy'}</span>
+        ${g.count} azо
+      </div>`;
+    el.onclick = () => openGrp(g.name);
+    w.appendChild(el);
+  });
+}
+
+/* ════════════════════════════════════════════════════
+   HOME RENDER
+════════════════════════════════════════════════════ */
+function renderHome() {
+  const my  = gdata.filter(g => g.members.includes(me));
+  const oth = gdata.filter(g => !g.members.includes(me));
+  $i('hero').style.display = gdata.length === 0 ? '' : 'none';
+  $i('sec-my').classList.toggle('hidden', my.length === 0);
+  $i('sec-all').classList.toggle('hidden', oth.length === 0);
+  renderHL('lst-my',  my);
+  renderHL('lst-all', oth);
+}
+function renderHL(id, list) {
+  const w = $i(id); w.innerHTML = '';
+  list.forEach((g, i) => {
+    const iO = g.owner === me, iM = g.members.includes(me);
+    const el = document.createElement('div');
+    el.className = 'hgi'; el.style.animationDelay = i * 0.04 + 's';
+    el.innerHTML = `
+      <span class="hgi-ico">${g.type === 'private' ? '🔒' : '💬'}</span>
+      <div class="hgi-info">
+        <div class="hgi-nm">
+          ${esc(g.name)}
+          ${iO ? '<span class="bd b3">Ega</span>' : iM ? '<span class="bd b4">Azо</span>' : ''}
+        </div>
+        <div class="hgi-sub">
+          <span class="bd ${g.type === 'public' ? 'b1' : 'b2'}">${g.type === 'public' ? 'Ommaviy' : 'Maxfiy'}</span>
+          · ${g.count} azо
+        </div>
+      </div>`;
+    el.onclick = () => openGrp(g.name);
+    w.appendChild(el);
+  });
+}
+
+/* ════════════════════════════════════════════════════
+   GURUHNI OCHISH
+════════════════════════════════════════════════════ */
+function openGrp(gname) {
+  cur = gname; off = 0; clearMsgs();
+  const g = gdata.find(x => x.name === gname);
+  if (!g) return;
+  showChat();
+  if (window.innerWidth <= 640) $i('sb').classList.remove('open');
+  renderSB();
+
+  // Guruh nomi — faqat ega/admin uchun bosiladi
+  const nm = $i('c-nm');
+  nm.textContent = g.name + (g.type === 'private' ? ' 🔒' : '');
+  if (g.owner === me || isAdm) {
+    nm.classList.add('owner');
+    nm.onclick = () => openGS();
+  } else {
+    nm.classList.remove('owner');
+    nm.onclick = null;
+  }
+
+  $i('c-st').innerHTML = `<span class="od"></span>${g.count} azо`;
+  $i('d-del').classList.toggle('hidden', g.owner !== me && !isAdm);
+
+  // Maxfiy guruh — qulflangan bo'lsa parol so'ra
+  if (g.type === 'private' && !unlocked.has(gname) && !isAdm) {
+    showLocked(); return;
+  }
+  hideLocked();
+  updateBar(g.members.includes(me) || isAdm);
+  // Serverdan kelgan fon rasmini qo'llash
+  applyGroupBg(g.bg_image);
+  pollMsgs();
+}
+
+/* ════════════════════════════════════════════════════
+   SERVER FON TIZIMI — localStorage ISHLATILMAYDI
+════════════════════════════════════════════════════ */
+function applyGroupBg(bg_url) {
+  const el = $i('msgs-bg');
+  if (bg_url) {
+    el.style.backgroundImage = `url('${API}${bg_url}')`;
+    el.style.display = 'block';
+  } else {
+    el.style.backgroundImage = '';
+    el.style.display = 'none';
+  }
+  // Sozlamalar preview ni ham yangilash
+  const prev = $i('gs-prev-bg');
+  if (prev) {
+    prev.style.backgroundImage = bg_url ? `url('${API}${bg_url}')` : '';
+  }
+}
+
+async function setGroupBg(bgFilename) {
+  // bgFilename = '' → fonni olib tashlash
+  const e = $i('gs-bg-e'), ok2 = $i('gs-bg-ok');
+  if (e)  e.textContent = '';
+  if (ok2) ok2.textContent = '';
+  try {
+    const d = await post('/set_group_bg', {
+      username:   me,
+      group_name: cur,
+      bg_filename: bgFilename
+    });
+    if (!d.ok) {
+      if (e) { e.textContent = d.error; shake(e) }
+      return;
+    }
+    // Serverdan tasdiqlangach gdata ni yangilash va fon qo'llash
+    const g = gdata.find(x => x.name === cur);
+    if (g) g.bg_image = d.bg_image;
+    applyGroupBg(d.bg_image);
+    // Tanlangan elementni belgilash
+    document.querySelectorAll('.gs-bg-item').forEach(el => {
+      const url = el.dataset.url || '';
+      el.classList.toggle('sel', url && url === d.bg_image);
+    });
+    if (ok2) showOk('gs-bg-ok', bgFilename ? '✓ Fon o\'rnatildi!' : '✓ Fon olib tashlandi!');
+    prevGStr = ''; // Keyingi pollda qayta render uchun
+  } catch (ex) {
+    if (e) e.textContent = "Server bilan bog'lanib bo'lmadi!";
+  }
+}
+
+/* ════════════════════════════════════════════════════
+   GURUH SOZLAMALARI
+════════════════════════════════════════════════════ */
+async function openGS() {
+  if (!cur) return;
+  const g = gdata.find(x => x.name === cur);
+  if (!g || (g.owner !== me && !isAdm)) return;
+
+  // Ko'rinishni almashtirish
+  $i('home').style.display      = 'none';
+  $i('chat').style.display      = 'none';
+  $i('admin').style.display     = 'none';
+  $i('grp-set').style.display   = 'flex';
+
+  // Maydonlarni boshlang'ich holatga keltirish
+  $i('gs-ttl').textContent = `⚙ ${g.name}`;
+  $i('gs-nm').value         = g.name;
+  $i('gs-nm-e').textContent  = '';
+  $i('gs-nm-ok').textContent = '';
+  $i('gs-bg-e').textContent  = '';
+  $i('gs-bg-ok').textContent = '';
+  $i('gs-pw-e').textContent  = '';
+  $i('gs-pw-ok').textContent = '';
+  $i('gs-opw').value = ''; $i('gs-npw').value = ''; $i('gs-npw2').value = '';
+
+  // Faqat private guruh uchun parol kartasi
+  $i('gs-pw-card').classList.toggle('hidden', g.type !== 'private');
+
+  // Hozirgi fon preview
+  const prev = $i('gs-prev-bg');
+  prev.style.backgroundImage = g.bg_image ? `url('${API}${g.bg_image}')` : '';
+
+  // Serverdan fonlarni yuklash
+  await loadGSBgGrid(g.bg_image);
+}
+
+async function loadGSBgGrid(currentBg) {
+  const grid = $i('gs-bg-grid');
+  grid.innerHTML = '<div class="gs-empty">Yuklanmoqda...</div>';
+  try {
+    const d = await get('/backgrounds');
+    if (!d.ok || !d.backgrounds.length) {
+      grid.innerHTML = '<div class="gs-empty">Hali fonlar yo\'q. Admin yuklashi kerak.</div>';
+      return;
+    }
+    grid.innerHTML = '';
+    d.backgrounds.forEach(bg => {
+      const item = document.createElement('div');
+      item.className = 'gs-bg-item' + (bg.url === currentBg ? ' sel' : '');
+      item.dataset.url = bg.url;
+      item.innerHTML = `<img src="${API}${bg.url}" loading="lazy" alt="fon"/>`;
+      item.onclick = () => setGroupBg(bg.url.split('/').pop()); // filename yuborish
+      grid.appendChild(item);
+    });
+  } catch (ex) {
+    grid.innerHTML = '<div class="gs-empty">Yuklashda xatolik</div>';
+  }
+}
+
+function closeGS() {
+  $i('grp-set').style.display = 'none';
+  $i('chat').style.display    = 'flex';
+}
+
+// Guruh nomini saqlash
+async function saveGName() {
+  const newNm = $i('gs-nm').value.trim();
+  const e = $i('gs-nm-e');
+  e.textContent = '';
+  if (!newNm) { e.textContent = 'Nom bo\'sh!'; return }
+  try {
+    const d = await post('/rename_group', { username: me, old_name: cur, new_name: newNm });
+    if (!d.ok) { e.textContent = d.error; shake(e); return }
+    const oldCur = cur; cur = d.new_name;
+    // gdata ni yangilash
+    const g = gdata.find(x => x.name === oldCur);
+    if (g) g.name = d.new_name;
+    showOk('gs-nm-ok', '✓ Nom muvaffaqiyatli o\'zgartirildi!');
+    $i('gs-ttl').textContent = `⚙ ${d.new_name}`;
+    $i('c-nm').textContent = d.new_name + (g && g.type === 'private' ? ' 🔒' : '');
+    prevGStr = ''; // Keyingi pollda qayta render
+    await loadGroups();
+  } catch (ex) { e.textContent = "Server bilan bog'lanib bo'lmadi!" }
+}
+
+// Guruh parolini saqlash
+async function saveGPw() {
+  const op = $i('gs-opw').value.trim();
+  const np = $i('gs-npw').value.trim();
+  const np2 = $i('gs-npw2').value.trim();
+  const e = $i('gs-pw-e');
+  e.textContent = '';
+  if (np.length < 4) { e.textContent = 'Yangi parol kamida 4 belgi!'; return }
+  if (np !== np2)    { e.textContent = 'Parollar mos emas!'; shake(e); return }
+  try {
+    const d = await post('/change_group_password', {
+      username: me, group_name: cur, old_pw: op, new_pw: np
+    });
+    if (!d.ok) { e.textContent = d.error; shake(e); return }
+    $i('gs-opw').value = ''; $i('gs-npw').value = ''; $i('gs-npw2').value = '';
+    showOk('gs-pw-ok', '✓ Parol muvaffaqiyatli yangilandi!');
+  } catch (ex) { e.textContent = "Server bilan bog'lanib bo'lmadi!" }
+}
+
+/* ════════════════════════════════════════════════════
+   POLLING
+════════════════════════════════════════════════════ */
+async function pollMsgs() {
+  if (!cur) return;
+  const g = gdata.find(x => x.name === cur);
+  if (g && g.type === 'private' && !unlocked.has(cur) && !isAdm) return;
+  try {
+    const d = await get(`/poll_group?group=${encodeURIComponent(cur)}&since=${off}`);
+    if (!d.ok) return;
+    const wasBot = isAtBottom();
+    d.messages.forEach(m => addMsg(m));
+    off = d.total;
+    if (g) { g.members = d.members; g.count = d.members.length }
+    $i('c-st').innerHTML = `<span class="od"></span>${d.members.length} azо`;
+    updateBar(d.members.includes(me) || isAdm);
+    // Serverdan fon qo'llash — poll_group bg_image qaytaradi
+    if (typeof d.bg_image !== 'undefined') applyGroupBg(d.bg_image);
+    if (wasBot) scrollBot(false);
+    updScrBtn();
+  } catch (e) {}
+}
+
+function isAtBottom() {
+  const m = $i('msgs');
+  return m.scrollHeight - m.scrollTop - m.clientHeight < 80;
+}
+function scrollBot(smooth = true) {
+  const m = $i('msgs');
+  m.scrollTo({ top: m.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
+  $i('scr-btn').style.display = 'none';
+}
+function updScrBtn() {
+  const m = $i('msgs');
+  const show = m.scrollHeight - m.scrollTop - m.clientHeight > 100;
+  $i('scr-btn').style.display = show ? 'flex' : 'none';
+}
+$i('msgs').addEventListener('scroll', updScrBtn);
+
+function clearMsgs() {
+  const box = $i('msgs'), bg = $i('msgs-bg');
+  box.innerHTML = ''; box.appendChild(bg);
+}
+
+function addMsg(m) {
+  const box = $i('msgs');
+  if (m.type === 'system') {
+    const el = document.createElement('div');
+    el.className = 'smsg';
+    el.innerHTML = `<span>${esc(m.text)}</span>`;
+    box.appendChild(el);
+  } else {
+    const self = m.username === me;
+    const el = document.createElement('div');
+    el.className = 'mw ' + (self ? 'me' : 'them');
+    el.innerHTML = `
+      <div class="mmeta">
+        <span class="mun">${self ? 'Sen' : esc(m.username)}</span>
+        <span>${esc(m.time)}</span>
+      </div>
+      <div class="mbub">${esc(m.text)}</div>`;
+    box.appendChild(el);
+  }
+}
+
+async function sendMsg() {
+  const inp = $i('mi'), txt = inp.value.trim();
+  if (!txt || !cur) return;
+  const btn = $i('s-btn');
+  btn.classList.add('pulse'); setTimeout(() => btn.classList.remove('pulse'), 280);
+  inp.value = ''; inp.style.height = 'auto'; updSendBtn();
+  try {
+    await post('/send_message', { username: me, group_name: cur, text: txt });
+    await pollMsgs(); scrollBot(true);
+  } catch (e) {}
+}
+function updSendBtn() { $i('s-btn').disabled = $i('mi').value.trim().length === 0 }
+
+/* ════════════════════════════════════════════════════
+   BAR BOSHQARUVI — to'g'ri qiymatlar
+════════════════════════════════════════════════════ */
+function updateBar(isMem) {
+  $i('mia').style.display  = isMem ? 'flex' : 'none';
+  $i('jbar').style.display = isMem ? 'none' : 'flex';
+}
+
+/* ════════════════════════════════════════════════════
+   QULFLANGAN
+════════════════════════════════════════════════════ */
+function showLocked() {
+  $i('locked').style.display = 'flex';
+  $i('msgs').classList.add('hidden');
+  $i('jbar').style.display = 'none';
+  $i('mia').style.display  = 'none';
+  $i('lk-pw').value = ''; $i('lk-err').textContent = '';
+}
+function hideLocked() {
+  $i('locked').style.display = 'none';
+  $i('msgs').classList.remove('hidden');
+}
+async function doUnlock() {
+  const pw = $i('lk-pw').value.trim(); $i('lk-err').textContent = '';
+  const g = gdata.find(x => x.name === cur); if (!g) return;
+  try {
+    const d = await post('/join_group', { username: me, group_name: cur, password: pw });
+    if (d.ok || d.error === "Siz allaqachon azoesiz!") {
+      unlocked.add(cur); prevGStr = '';
+      await loadGroups();
+      hideLocked();
+      const gu = gdata.find(x => x.name === cur);
+      updateBar(gu ? gu.members.includes(me) : true);
+      applyGroupBg(gu ? gu.bg_image : '');
+      pollMsgs();
+    } else { $i('lk-err').textContent = d.error; shake($i('lk-pw')) }
+  } catch (e) { $i('lk-err').textContent = "Xatolik!" }
+}
+
+/* ════════════════════════════════════════════════════
+   GURUH TARK ETISH / O'CHIRISH
+════════════════════════════════════════════════════ */
+async function doLeave() {
+  closeDrop();
+  if (!confirm(`"${cur}" guruhini tark etasizmi?`)) return;
+  await post('/leave_group', { username: me, group_name: cur }).catch(() => {});
+  unlocked.delete(cur); cur = ''; off = 0; prevGStr = '';
+  await loadGroups(); showHome();
+}
+async function doDelete() {
+  closeDrop();
+  if (!confirm(`"${cur}" guruhini o'chirasizmi? Barcha xabarlar ham o'chadi!`)) return;
+  await post('/delete_group', { username: me, group_name: cur }).catch(() => {});
+  unlocked.delete(cur); cur = ''; off = 0; prevGStr = '';
+  await loadGroups(); showHome();
+}
+
+/* ════════════════════════════════════════════════════
+   GURUH YARATISH
+════════════════════════════════════════════════════ */
+function openCreate() {
+  $i('cr-nm').value = ''; $i('cr-pw').value = ''; $i('cr-err').textContent = '';
+  crType = 'public';
+  $i('t-pub').className = 'tbtn sp'; $i('t-prv').className = 'tbtn';
+  $i('cr-pw-wrap').classList.add('hidden');
+  $i('m-create').classList.add('on');
+}
+function selType(t) {
+  crType = t;
+  $i('t-pub').className = 'tbtn' + (t === 'public'  ? ' sp' : '');
+  $i('t-prv').className = 'tbtn' + (t === 'private' ? ' sm' : '');
+  $i('cr-pw-wrap').classList.toggle('hidden', t !== 'private');
+}
+async function createGrp() {
+  const gn = $i('cr-nm').value.trim(), pw = $i('cr-pw').value.trim(), e = $i('cr-err');
+  e.textContent = '';
+  try {
+    const d = await post('/create_group', { username: me, group_name: gn, type: crType, password: pw });
+    if (!d.ok) { e.textContent = d.error; return }
+    closeM('m-create');
+    if (crType === 'private') unlocked.add(gn);
+    prevGStr = ''; await loadGroups(); openGrp(gn);
+  } catch (ex) { e.textContent = "Xatolik!" }
+}
+
+/* ════════════════════════════════════════════════════
+   GURUHGA QO'SHILISH
+════════════════════════════════════════════════════ */
+function openJoin() {
+  const g = gdata.find(x => x.name === cur); if (!g) return;
+  $i('j-lbl').textContent = `Guruh: ${cur}`;
+  $i('j-pw').value = ''; $i('j-err').textContent = '';
+  $i('j-pw-wrap').classList.toggle('hidden', g.type !== 'private');
+  $i('m-join').classList.add('on');
+}
+async function joinGrp() {
+  const pw = $i('j-pw').value.trim(), e = $i('j-err'); e.textContent = '';
+  try {
+    const d = await post('/join_group', { username: me, group_name: cur, password: pw });
+    if (!d.ok) { e.textContent = d.error; return }
+    const g = gdata.find(x => x.name === cur);
+    if (g && g.type === 'private') unlocked.add(cur);
+    closeM('m-join'); prevGStr = ''; await loadGroups();
+    off = 0; clearMsgs(); hideLocked();
+    const gu = gdata.find(x => x.name === cur);
+    updateBar(true); applyGroupBg(gu ? gu.bg_image : ''); pollMsgs();
+  } catch (ex) { e.textContent = "Xatolik!" }
+}
+
+/* ════════════════════════════════════════════════════
+   ADMIN
+════════════════════════════════════════════════════ */
+async function showAdmin() {
+  if (!isAdm) return;
+  $i('home').style.display      = 'none';
+  $i('chat').style.display      = 'none';
+  $i('grp-set').style.display   = 'none';
+  // display:flex — muhim tuzatish!
+  $i('admin').style.display     = 'flex';
+  cur = ''; renderSB();
+
+  // Loading ko'rinishini qo'yish
+  $i('a-su').textContent = '—'; $i('a-sg').textContent = '—';
+  $i('a-users').innerHTML  = '<div class="ald"><div class="ald-d"></div><div class="ald-d"></div><div class="ald-d"></div></div>';
+  $i('a-groups').innerHTML = '<div class="ald"><div class="ald-d"></div><div class="ald-d"></div><div class="ald-d"></div></div>';
+  $i('bg-grid').innerHTML  = '<div class="ald" style="grid-column:1/-1"><div class="ald-d"></div><div class="ald-d"></div><div class="ald-d"></div></div>';
+
+  // Statistika va ro'yxatlarni yuklash
+  try {
+    const d = await post('/admin/stats', { username: me });
+    if (d.ok) {
+      $i('a-su').textContent = d.total_users;
+      $i('a-sg').textContent = d.total_groups;
+      // Foydalanuvchilar
+      const aw = $i('a-users'); aw.innerHTML = '';
+      if (!d.user_list.length) {
+        aw.innerHTML = '<div class="ali" style="color:var(--td)">Foydalanuvchilar yo\'q</div>';
+      } else {
+        const al = document.createElement('div'); al.className = 'alist';
+        d.user_list.forEach(u => {
+          const li = document.createElement('div'); li.className = 'ali';
+          li.innerHTML = `👤 ${esc(u)}<button class="ali-del" onclick="adminDelUser('${esc(u)}')">🗑 O'chir</button>`;
+          al.appendChild(li);
+        });
+        aw.appendChild(al);
+      }
+      // Guruhlar
+      const gw = $i('a-groups'); gw.innerHTML = '';
+      if (!d.group_list.length) {
+        gw.innerHTML = '<div class="ali" style="color:var(--td)">Guruhlar yo\'q</div>';
+      } else {
+        const al2 = document.createElement('div'); al2.className = 'alist';
+        d.group_list.forEach(g => {
+          const li = document.createElement('div'); li.className = 'ali';
+          li.innerHTML = `${g.type === 'private' ? '🔒' : '💬'} ${esc(g.name)}
+            <span style="font-size:.6rem;color:var(--td);margin-left:3px">(${esc(g.owner)})</span>
+            <span style="margin-left:auto;font-size:.63rem;color:var(--td)">${g.members} azо</span>
+            <button class="ali-del" onclick="adminDelGroup('${esc(g.name)}')">🗑</button>`;
+          al2.appendChild(li);
+        });
+        gw.appendChild(al2);
+      }
+    }
+    // Texnik ishlar holati
+    const s = await get('/status'); maintOn = s.maintenance; updMBtn();
+  } catch (e) {}
+
+  // Fon rasmlari gridini yuklash
+  await loadAdminBgGrid();
+}
+
+async function loadAdminBgGrid() {
+  const grid = $i('bg-grid');
+  try {
+    const d = await get('/backgrounds');
+    grid.innerHTML = '';
+    if (!d.ok || !d.backgrounds.length) {
+      grid.innerHTML = '<div class="gs-empty" style="grid-column:1/-1">Hali fonlar yo\'q</div>';
+      return;
+    }
+    d.backgrounds.forEach(bg => grid.appendChild(makeBgCard(bg)));
+  } catch (ex) {
+    grid.innerHTML = '<div class="gs-empty" style="grid-column:1/-1;color:var(--a2)">Yuklashda xatolik</div>';
+  }
+}
+
+function makeBgCard(bg) {
+  const card = document.createElement('div');
+  card.className = 'bg-card'; card.id = 'bgc-' + bg.id;
+  card.innerHTML = `
+    <img src="${API}${bg.url}" loading="lazy" alt="fon"/>
+    <div class="bg-ov">
+      <button class="bg-del" onclick="adminDelBg(${bg.id},event)">🗑 Yo'q qilish</button>
+      <button class="bg-kp"  onclick="this.closest('.bg-ov').style.opacity=0">✓ Qoldirish</button>
+    </div>`;
+  return card;
+}
+
+async function uploadBg(inp) {
+  if (!inp.files || !inp.files[0]) return;
+  const fd = new FormData();
+  fd.append('username', me);
+  fd.append('file', inp.files[0]);
+  inp.value = '';
+  try {
+    const r = await fetch(API + '/admin/upload_bg', { method: 'POST', body: fd });
+    const d = await r.json();
+    if (!d.ok) { alert('Xatolik: ' + d.error); return }
+    const grid = $i('bg-grid');
+    // "Hali fonlar yo'q" yozuvini olib tashlash
+    const empty = grid.querySelector('.gs-empty');
+    if (empty) empty.remove();
+    const card = makeBgCard(d.bg);
+    grid.insertBefore(card, grid.firstChild);
+  } catch (e) { alert("Yuklashda xatolik!") }
+}
+
+async function adminDelBg(bgId, e) {
+  e.stopPropagation();
+  if (!confirm("Bu fon rasmini o'chirasizmi?")) return;
+  try {
+    const d = await post('/admin/delete_bg', { username: me, bg_id: bgId });
+    if (!d.ok) { alert('Xatolik: ' + d.error); return }
+    const card = $i('bgc-' + bgId);
+    if (card) {
+      // scale(0)+opacity(0) animatsiya
+      card.style.transition = 'transform .28s ease,opacity .28s ease';
+      card.style.transform  = 'scale(0)';
+      card.style.opacity    = '0';
+      setTimeout(() => card.remove(), 300);
+    }
+  } catch (ex) { alert("O'chirishda xatolik!") }
+}
+
+async function adminDelUser(target) {
+  if (!confirm(`"${target}" foydalanuvchisini o'chirasizmi?\nUning barcha guruhlari ham o'chadi!`)) return;
+  try {
+    const d = await post('/admin/delete_user', { username: me, target });
+    if (d.ok) { prevGStr = ''; await showAdmin() }
+    else alert('Xatolik: ' + d.error);
+  } catch (e) { alert("Xatolik!") }
+}
+async function adminDelGroup(gname) {
+  if (!confirm(`"${gname}" guruhini o'chirasizmi?\nBarcha xabarlar ham o'chadi!`)) return;
+  try {
+    const d = await post('/admin/delete_group', { username: me, group_name: gname });
+    if (d.ok) { prevGStr = ''; await loadGroups(); await showAdmin() }
+    else alert('Xatolik: ' + d.error);
+  } catch (e) { alert("Xatolik!") }
+}
+
+function updMBtn() {
+  const b = $i('m-btn');
+  if (maintOn) {
+    b.textContent = "✓ Yangilanmoqda YOQILGAN — o'chirish";
+    b.className = 'mbt mbt-on';
+  } else {
+    b.textContent = '🔧 Yangilanmoqda rejimini yoqish';
+    b.className = 'mbt mbt-off';
+  }
+}
+async function toggleMaint() {
+  if (!maintOn) {
+    const msg = $i('m-ta').value.trim() || 'Sayt yangilanmoqda...';
+    const d = await post('/admin/set_maintenance', { username: me, active: true, message: msg });
+    if (d.ok) { maintOn = true; updMBtn() }
+  } else await cancelMaint();
+}
+async function cancelMaint() {
+  const d = await post('/admin/set_maintenance', { username: me, active: false, message: '' });
+  if (d.ok) { maintOn = false; updMBtn() }
+}
+
+/* ════════════════════════════════════════════════════
+   KO'RINISH BOSHQARUVI
+════════════════════════════════════════════════════ */
+function showHome() {
+  $i('home').style.display    = '';
+  $i('chat').style.display    = 'none';
+  $i('admin').style.display   = 'none';
+  $i('grp-set').style.display = 'none';
+  renderHome(); renderSB();
+}
+function showChat() {
+  $i('home').style.display    = 'none';
+  $i('chat').style.display    = 'flex';
+  $i('admin').style.display   = 'none';
+  $i('grp-set').style.display = 'none';
+}
+function goBack() {
+  // Sozlamalar ochiq bo'lsa chatga qaytish
+  if ($i('grp-set').style.display === 'flex') { closeGS(); return }
+  cur = ''; off = 0; showHome();
+}
+function toggleSB() { $i('sb').classList.toggle('open') }
+function closeM(id) { $i(id).classList.remove('on') }
+
+/* ════════════════════════════════════════════════════
+   DROPDOWN
+════════════════════════════════════════════════════ */
+function toggleDrop(e) { e.stopPropagation(); $i('drop').classList.toggle('open') }
+function closeDrop()   { $i('drop').classList.remove('open') }
+document.addEventListener('click', e => { if (!e.target.closest('.dot-w')) closeDrop() });
+
+/* ════════════════════════════════════════════════════
+   MODAL YOPISH — tashqarisiga bosish
+════════════════════════════════════════════════════ */
+document.querySelectorAll('.ov').forEach(m =>
+  m.addEventListener('click', function (e) { if (e.target === this) this.classList.remove('on') })
+);
+
+/* ════════════════════════════════════════════════════
+   INPUT HODISALARI
+════════════════════════════════════════════════════ */
+$i('mi').addEventListener('input', function () {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 90) + 'px';
+  updSendBtn();
+});
+$i('mi').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg() }
+});
+$i('a-p').addEventListener('keydown', e => { if (e.key === 'Enter') doAuth() });
+$i('a-u').addEventListener('keydown', e => { if (e.key === 'Enter') $i('a-p').focus() });
+$i('lk-pw').addEventListener('keydown', e => { if (e.key === 'Enter') doUnlock() });
+
+/* ════════════════════════════════════════════════════
+   MOBIL VIEWPORT (klaviatura chiqganda)
+════════════════════════════════════════════════════ */
+if ('visualViewport' in window) {
+  window.visualViewport.addEventListener('resize', () => {
+    document.body.style.height = window.visualViewport.height + 'px';
+  });
+}
+</script>
+</body>
+</html>
